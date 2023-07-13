@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // insert cookies manually
     headers.insert(
         COOKIE,
-        "HackThisSite=pio0t98ki64gvgrd3m44o92du4".parse().unwrap(),
+        "HackThisSite=v9750hpd9pe3c6pjt9ksv92m11".parse().unwrap(),
     );
 
     let res_body = client
@@ -133,10 +133,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 println!("Coordinates for centre is x:{}, y:{}", centre_x, centre_y);
 
                 // get one of the coordinates from the first top-most character
-                let mut coordinates_max = (0, 0, 0, 0);
+
+                let mut max_coordinates: Vec<(i32, i32, i32, i32)> = Vec::new();
+
                 for i in all_coordinates.iter() {
                     if i.1 == min_y {
-                        coordinates_max = (i.0, i.1, i.2, i.3);
+                        let coordinates_max = (i.0, i.1, i.2, i.3);
+                        max_coordinates.push(coordinates_max);
                         break;
                     }
                 }
@@ -151,17 +154,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 println!("the leftmost coordinate: {:?}", coordinates_left); // debug
 
-                println!("the topmost coordinate: {:?}", coordinates_max); // debug
+                println!("the topmost coordinates: {:?}", max_coordinates); // debug
 
-                let first_char = analyze_character(
-                    all_coordinates,
-                    coordinates_max.0,
-                    coordinates_max.1,
-                    coordinates_max.2,
-                    coordinates_max.3,
-                );
+                let first_char = analyze_character(all_coordinates, max_coordinates);
 
-                println!("first_char: {:?}", first_char);
+                // println!("first_char: {:?}", first_char);
+                // get all coordinates and manually check if they're good to go
+                for i in first_char.iter() {
+                    println!(
+                        "left:{}px;top:{}px;width:{}px;height:{}px;",
+                        i.0, i.1, i.2, i.3
+                    );
+                }
             }
         }
     }
@@ -171,13 +175,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 fn analyze_character(
     all_coordinates: Vec<(i32, i32, i32, i32)>,
-    initial_x: i32,
-    initial_y: i32,
-    initial_w: i32,
-    initial_h: i32,
+    max_coordinates: Vec<(i32, i32, i32, i32)>,
 ) -> Vec<(i32, i32, i32, i32)> {
     let mut known_character_coordinates: Vec<(i32, i32, i32, i32)> = Vec::new();
-    known_character_coordinates.push((initial_x, initial_y, initial_w, initial_h));
+
+    for i in max_coordinates {
+        known_character_coordinates.push((i.0, i.1, i.2, i.3));
+    }
 
     // preventing iteration through stuff that's already been iterated through.
     let mut already_iterated_through: HashSet<(i32, i32, i32, i32)> = HashSet::new();
@@ -247,8 +251,14 @@ fn analyze_character(
                     continue 'inner;
                 }
 
-                //
+                // "A"
                 if (cc_x <= w + x && cc_x >= x) && (y <= cc_y + cc_h && y >= cc_y) {
+                    new_coordinates.insert((x, y, w, h));
+
+                    continue 'inner;
+                }
+
+                if (y >= cc_y && y <= cc_y + cc_h) && (x >= cc_x && x <= cc_x + cc_w) {
                     new_coordinates.insert((x, y, w, h));
 
                     continue 'inner;
