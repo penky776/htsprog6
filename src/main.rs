@@ -269,6 +269,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let sections = [Section::A, Section::B, Section::C, Section::D];
                 let mut section = &sections[0];
 
+                let mut stop_at_nine = 0;
+
                 // read in circular. after every ninth iteration, the section changes. there are 253 characters.
                 for i in 1..253 {
                     if i % 9 == 0 {
@@ -285,6 +287,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         )
                         .unwrap();
 
+                    let mut nxt_coord_vec = Vec::new();
+                    nxt_coord_vec.push(next_coord.clone());
+
+                    prev_coord = nxt_coord_vec;
+
                     let mut initial_coordinates = Vec::new();
                     initial_coordinates.push(next_coord);
 
@@ -292,20 +299,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         analyze_character(all_coordinates.clone(), initial_coordinates);
 
                     known_character_coordinates.push(all_coord_of_next);
+                    stop_at_nine += 1;
+                    if stop_at_nine == 10 {
+                        break;
+                    }
                 }
 
                 // println!("{:?}", known_character_coordinates.len());
 
                 // debug
-                for cc in known_character_coordinates.iter() {
-                    eprintln!("start");
-                    for i in cc.iter() {
-                        println!(
-                            "left:{}px;top:{}px;width:{}px;height:{}px;",
-                            i.0, i.1, i.2, i.3
-                        );
-                    }
-                    eprintln!("end");
+                // for cc in known_character_coordinates.iter() {
+                // eprintln!("start");
+                // for i in cc.iter() {
+                //     println!(
+                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
+                //         i.0, i.1, i.2, i.3
+                //     );
+                // }
+                // eprintln!("end");
+                // }
+
+                // stops at seven
+                for i in known_character_coordinates[5].iter() {
+                    println!(
+                        "left:{}px;top:{}px;width:{}px;height:{}px;",
+                        i.0, i.1, i.2, i.3
+                    );
                 }
             }
         }
