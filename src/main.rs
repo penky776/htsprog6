@@ -1,12 +1,90 @@
-use std::{
-    collections::{HashMap, HashSet},
-    error::Error,
-    f64::consts::PI,
-    fs::File,
-    io::Write,
-};
+use std::{collections::HashSet, error::Error, f64::consts::PI, fmt, fs::File, io::Write};
 
 use reqwest::header::{HeaderMap, COOKIE};
+
+enum Character {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    Zero,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+}
+
+struct Letter {
+    what_am_i: Character,
+    val: String,
+}
+
+struct Number {
+    what_am_i: Character,
+    val: u32,
+}
+
+// TODO
+impl Character {
+    fn identify_char(&self) {
+        let methods = [Self::is_one()]; // add all methods here
+    }
+
+    fn is_one() -> bool {
+        return false;
+    }
+
+    fn is_two(
+        all_coordinates: Vec<(i32, i32, i32, i32)>,
+        curves: Vec<(i32, i32, i32, i32)>,
+        lines: Vec<(i32, i32, i32, i32)>,
+    ) -> bool {
+        return false;
+    }
+
+    fn is_a() -> bool {
+        return false;
+    }
+}
+
+struct Coordinates {
+    x: i32,
+    y: i32,
+    w: i32,
+    h: i32,
+}
+
+impl Coordinates {
+    fn is_arc(&self, angle: i32) {}
+
+    fn is_line(&self, angle: i32) {}
+}
+
+enum Shape {
+    Arc,
+    Line,
+}
+
+struct Arc {
+    x: i32,
+    y: i32,
+    w: i32,
+    h: i32,
+}
+
+struct Line {
+    x: i32,
+    y: i32,
+    w: i32,
+    h: i32,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -19,7 +97,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // insert cookies manually
     headers.insert(
         COOKIE,
-        "HackThisSite=v9750hpd9pe3c6pjt9ksv92m11".parse().unwrap(),
+        "HackThisSite=0hmvsnmgeubv3vgka3s4n523n0".parse().unwrap(),
     );
 
     let res_body = client
@@ -125,10 +203,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 max_x, min_x
             );
 
-                let diameter = max_y - min_y;
+                let diameter_y = max_y - min_y;
 
-                let centre_x = (diameter / 2) + min_x;
-                let centre_y = (diameter / 2) + min_y;
+                let centre_x = (diameter_y / 2) + min_x;
+                let centre_y = (diameter_y / 2) + min_y;
+
+                let centre = (centre_x, centre_y);
 
                 println!("Coordinates for centre is x:{}, y:{}", centre_x, centre_y);
 
@@ -156,15 +236,76 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 println!("the topmost coordinates: {:?}", max_coordinates); // debug
 
-                let first_char = analyze_character(all_coordinates, max_coordinates);
+                let first_char = analyze_character(all_coordinates.clone(), max_coordinates);
 
-                // println!("first_char: {:?}", first_char);
-                // get all coordinates and manually check if they're good to go
+                // debug
                 for i in first_char.iter() {
                     println!(
                         "left:{}px;top:{}px;width:{}px;height:{}px;",
                         i.0, i.1, i.2, i.3
                     );
+                }
+
+                // let mut known_character_coordinates = Vec::new();
+                // known_character_coordinates.append(&mut first_char.clone());
+                // let test = section
+                //     .get_next(
+                //         known_character_coordinates,
+                //         first_char,
+                //         all_coordinates.clone(),
+                //         centre,
+                //     )
+                //     .unwrap();
+
+                // println!(
+                //     "next: left:{}px;top:{}px;width:{}px;height:{}px;",
+                //     test.0, test.1, test.2, test.3
+                // );
+
+                let mut known_character_coordinates: Vec<Vec<(i32, i32, i32, i32)>> = Vec::new();
+                known_character_coordinates.push(first_char.clone());
+
+                let mut prev_coord = first_char;
+                let sections = [Section::A, Section::B, Section::C, Section::D];
+                let mut section = &sections[0];
+
+                // read in circular. after every ninth iteration, the section changes. there are 253 characters.
+                for i in 1..253 {
+                    if i % 9 == 0 {
+                        let sec_index = (i / 9) % sections.len();
+                        section = &sections[sec_index];
+                        // eprintln!("entering section {} at iteration {}", sec_index, i);
+                    }
+                    let next_coord = section
+                        .get_next(
+                            known_character_coordinates.clone(),
+                            prev_coord.clone(),
+                            all_coordinates.clone(),
+                            centre,
+                        )
+                        .unwrap();
+
+                    let mut initial_coordinates = Vec::new();
+                    initial_coordinates.push(next_coord);
+
+                    let all_coord_of_next =
+                        analyze_character(all_coordinates.clone(), initial_coordinates);
+
+                    known_character_coordinates.push(all_coord_of_next);
+                }
+
+                // println!("{:?}", known_character_coordinates.len());
+
+                // debug
+                for cc in known_character_coordinates.iter() {
+                    eprintln!("start");
+                    for i in cc.iter() {
+                        println!(
+                            "left:{}px;top:{}px;width:{}px;height:{}px;",
+                            i.0, i.1, i.2, i.3
+                        );
+                    }
+                    eprintln!("end");
                 }
             }
         }
@@ -173,13 +314,102 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[derive(Debug)]
+enum HTSError {
+    CouldNotFindNext,
+}
+
+impl fmt::Display for HTSError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            HTSError::CouldNotFindNext => write!(f, "unable to find next coordinate"),
+        }
+    }
+}
+
+// separate the circle into four quarters. ABCD, and go anti-clockwise, starting from the top.
+#[derive(PartialEq)]
+enum Section {
+    A,
+    B,
+    C,
+    D,
+}
+
+impl Section {
+    fn get_next(
+        &self,
+        known_cc: Vec<Vec<(i32, i32, i32, i32)>>,
+        prev: Vec<(i32, i32, i32, i32)>,
+        all_coordinates: Vec<(i32, i32, i32, i32)>,
+        centre: (i32, i32),
+    ) -> Result<(i32, i32, i32, i32), HTSError> {
+        // get random coordinate from the previous character
+        let cc = prev[0];
+        let (cc_x, cc_y) = (cc.0, cc.1);
+
+        let (c_x, c_y) = (centre.0, centre.1);
+
+        // debug
+        println!("centre: {:?}", centre);
+        println!("known_cc: {:?}", known_cc);
+        println!("prev: {:?}", prev);
+
+        let mut next_coordinates: Vec<(i32, i32, i32, i32)> = Vec::new();
+
+        match self {
+            Section::A => {
+                let mut smallest_y = 50000;
+
+                for i in all_coordinates.iter() {
+                    if known_cc
+                        .iter()
+                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
+                    {
+                        continue;
+                    }
+                    let (x, y, w, h) = (i.0, i.1, i.2, i.3);
+
+                    if x <= cc_x && y >= cc_y && y <= c_y {
+                        if y <= smallest_y {
+                            smallest_y = y;
+                            next_coordinates.clear();
+                            next_coordinates.push((x, y, w, h));
+                        }
+                    }
+                }
+            }
+            Section::B => {
+                next_coordinates.push((0, 0, 0, 0));
+                // return Ok(next_coordinate);
+            }
+            Section::C => {
+                next_coordinates.push((0, 0, 0, 0));
+                // return Ok(next_coordinate);
+            }
+            Section::D => {
+                next_coordinates.push((0, 0, 0, 0));
+                // return Ok(next_coordinate);
+            }
+        }
+
+        let next_coordinate: Option<(i32, i32, i32, i32)> = next_coordinates.first().copied();
+
+        if let Some(coord) = next_coordinate {
+            return Ok(coord);
+        } else {
+            return Err(HTSError::CouldNotFindNext);
+        }
+    }
+}
+
 fn analyze_character(
     all_coordinates: Vec<(i32, i32, i32, i32)>,
-    max_coordinates: Vec<(i32, i32, i32, i32)>,
+    initial_coordinates: Vec<(i32, i32, i32, i32)>,
 ) -> Vec<(i32, i32, i32, i32)> {
     let mut known_character_coordinates: Vec<(i32, i32, i32, i32)> = Vec::new();
 
-    for i in max_coordinates {
+    for i in initial_coordinates {
         known_character_coordinates.push((i.0, i.1, i.2, i.3));
     }
 
@@ -192,9 +422,6 @@ fn analyze_character(
 
         // the elements in this will get added to known_character_coordinates at the end of each loop
         let mut new_coordinates: HashSet<(i32, i32, i32, i32)> = HashSet::new();
-
-        // preventing iteration through stuff that's already been iterated through. the vector of arc coordinates have several duplicates.
-        // let mut already_iterated_through: HashSet<(i32, i32, i32, i32)> = HashSet::new();
 
         // declare loop "outer" to loop through the known_character_coordinates vector, which gets updated each time the main loop resets
         'outer: for cc in known_character_coordinates.iter() {
@@ -213,7 +440,8 @@ fn analyze_character(
                 let w = i.2;
                 let h = i.3;
 
-                // finding adjacent coordinates. basically a bunch of condtions are defined below to find coordinates that are "connected" with each other.
+                // finding adjacent coordinates. basically a bunch of condtions are defined below to find coordinates that are "connected" with each other. as of 7/14/23 this section is kind of a mess and some of the defined conditions may be accidental duplicates. ill clean it up later.
+
                 // if one of the conditions return true, we insert the i value into new_coordinates and move on to the next iteration of "inner" loop. this way we can test a single element of known_coordinates against all of the conditions
                 if x == cc_x && y == cc_y && (w != cc_w || h != cc_h) {
                     new_coordinates.insert((x, y, w, h));
@@ -226,8 +454,6 @@ fn analyze_character(
 
                     continue 'inner;
                 }
-
-                // find vertical 2
 
                 // ^
                 if (cc_x == x + 1 && cc_y == y - 1) || (cc_y == y - 1 && x == cc_x + 1) {
@@ -280,12 +506,12 @@ fn analyze_character(
         let already_iterated_through_len = already_iterated_through.len();
 
         // debug
-        println!(
-            "already iterated through len: {:?}",
-            already_iterated_through_len
-        );
-        println!("new len of known: {:?}", new_len_of_known); // debug
-        println!("already iterated through {:?}", already_iterated_through);
+        // println!(
+        //     "already iterated through len: {:?}",
+        //     already_iterated_through_len
+        // );
+        // println!("new len of known: {:?}", new_len_of_known); // debug
+        // println!("already iterated through {:?}", already_iterated_through);
         // println!(
         //     "known_character_coordinates: {:?}",
         //     known_character_coordinates
@@ -306,58 +532,6 @@ fn analyze_character(
         already_iterated_through.into_iter().collect();
 
     return collected_coordinates;
-}
-
-enum Character {
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-}
-
-struct Letter {
-    what_am_i: Character,
-    val: String,
-}
-
-struct Number {
-    what_am_i: Character,
-    val: u32,
-}
-
-// TODO
-impl Character {
-    fn identify_char(&self) {
-        let methods = [Self::is_one()]; // add all methods here
-    }
-
-    fn is_one() -> bool {
-        return false;
-    }
-
-    fn is_two(
-        all_coordinates: Vec<(i32, i32, i32, i32)>,
-        curves: Vec<(i32, i32, i32, i32)>,
-        lines: Vec<(i32, i32, i32, i32)>,
-    ) -> bool {
-        return false;
-    }
-
-    fn is_a() -> bool {
-        return false;
-    }
 }
 
 // ---------------------translated the functions from the js in the source code into rust-----------------
