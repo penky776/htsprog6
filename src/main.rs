@@ -97,7 +97,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // insert cookies manually
     headers.insert(
         COOKIE,
-        "HackThisSite=0hmvsnmgeubv3vgka3s4n523n0".parse().unwrap(),
+        "HackThisSite=s6nplb8r722441nitcgqjpq360".parse().unwrap(),
     );
 
     let res_body = client
@@ -246,38 +246,28 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     );
                 }
 
-                // let mut known_character_coordinates = Vec::new();
-                // known_character_coordinates.append(&mut first_char.clone());
-                // let test = section
-                //     .get_next(
-                //         known_character_coordinates,
-                //         first_char,
-                //         all_coordinates.clone(),
-                //         centre,
-                //     )
-                //     .unwrap();
-
-                // println!(
-                //     "next: left:{}px;top:{}px;width:{}px;height:{}px;",
-                //     test.0, test.1, test.2, test.3
-                // );
-
                 let mut known_character_coordinates: Vec<Vec<(i32, i32, i32, i32)>> = Vec::new();
                 known_character_coordinates.push(first_char.clone());
 
                 let mut prev_coord = first_char;
                 let sections = [Section::A, Section::B, Section::C, Section::D];
-                let mut section = &sections[0];
 
+                let mut sec_index = 0;
+
+                // debug purposes
                 let mut stop_at_nine = 0;
 
                 // read in circular. after every ninth iteration, the section changes. there are 253 characters.
                 for i in 1..253 {
                     if i % 9 == 0 {
-                        let sec_index = (i / 9) % sections.len();
-                        section = &sections[sec_index];
-                        // eprintln!("entering section {} at iteration {}", sec_index, i);
+                        if sec_index != 3 {
+                            sec_index += 1;
+                        } else {
+                            sec_index = 0;
+                        }
                     }
+                    let section = &sections[sec_index];
+
                     let next_coord = section
                         .get_next(
                             known_character_coordinates.clone(),
@@ -305,8 +295,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }
                 }
 
-                // println!("{:?}", known_character_coordinates.len());
-
                 // debug
                 // for cc in known_character_coordinates.iter() {
                 // eprintln!("start");
@@ -319,8 +307,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // eprintln!("end");
                 // }
 
-                // stops at seven
-                for i in known_character_coordinates[5].iter() {
+                // debug
+                println!("index 8");
+                for i in known_character_coordinates[8].iter() {
+                    println!(
+                        "left:{}px;top:{}px;width:{}px;height:{}px;",
+                        i.0, i.1, i.2, i.3
+                    );
+                }
+
+                println!("index 9");
+                for i in known_character_coordinates[9].iter() {
                     println!(
                         "left:{}px;top:{}px;width:{}px;height:{}px;",
                         i.0, i.1, i.2, i.3
@@ -468,7 +465,8 @@ fn analyze_character(
                     continue 'inner;
                 }
 
-                if x == cc_x && y != cc_y && ((y - cc_y) < cc_h || (cc_y - y).abs() < cc_h) {
+                // 30 deg E
+                if ((x == cc_w + cc_x && y == cc_y - h) || (x == cc_x - w && y == cc_y - cc_h)) {
                     new_coordinates.insert((x, y, w, h));
 
                     continue 'inner;
@@ -522,7 +520,7 @@ fn analyze_character(
         // get the new length of known_coordinates. unless there's something seriously wrong, this variable will never contain one. this is because new_coordinates always gets updated in each loop.
         let new_len_of_known = known_character_coordinates.len();
 
-        let already_iterated_through_len = already_iterated_through.len();
+        // let already_iterated_through_len = already_iterated_through.len();
 
         // debug
         // println!(
