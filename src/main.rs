@@ -97,7 +97,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // insert cookies manually
     headers.insert(
         COOKIE,
-        "HackThisSite=s6nplb8r722441nitcgqjpq360".parse().unwrap(),
+        "HackThisSite=l9f5v513cg0bnvu28kefdk7j77".parse().unwrap(),
     );
 
     let res_body = client
@@ -255,18 +255,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let mut sec_index = 0;
 
                 // debug purposes
-                let mut stop_at_nine = 0;
+                // let mut stop_at_nine = 0;
 
-                // read in circular. after every ninth iteration, the section changes. there are 253 characters.
+                // read in circular. after every ninth iteration, the section changes. there are 253 characters. looping 252 times because the first char is already provided
                 for i in 1..253 {
+                    let section = &sections[sec_index];
+
+                    // at every tenth character, move to the next section
                     if i % 9 == 0 {
                         if sec_index != 3 {
                             sec_index += 1;
+                            // eprintln!("entering sec {} at loop {}", sec_index, i + 1);
                         } else {
                             sec_index = 0;
                         }
                     }
-                    let section = &sections[sec_index];
 
                     let next_coord = section
                         .get_next(
@@ -289,10 +292,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         analyze_character(all_coordinates.clone(), initial_coordinates);
 
                     known_character_coordinates.push(all_coord_of_next);
-                    stop_at_nine += 1;
-                    if stop_at_nine == 10 {
-                        break;
-                    }
+
+                    // debug
+                    // stop_at_nine += 1;
+                    // if stop_at_nine == 37 {
+                    //     break;
+                    // }
                 }
 
                 // debug
@@ -307,17 +312,35 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // eprintln!("end");
                 // }
 
+                println!("last section read: {:?}", &sections[sec_index]);
+
                 // debug
-                println!("index 8");
-                for i in known_character_coordinates[8].iter() {
+                println!("index 18");
+                for i in known_character_coordinates[18].iter() {
                     println!(
                         "left:{}px;top:{}px;width:{}px;height:{}px;",
                         i.0, i.1, i.2, i.3
                     );
                 }
 
-                println!("index 9");
-                for i in known_character_coordinates[9].iter() {
+                println!("index 28");
+                for i in known_character_coordinates[36].iter() {
+                    println!(
+                        "left:{}px;top:{}px;width:{}px;height:{}px;",
+                        i.0, i.1, i.2, i.3
+                    );
+                }
+
+                println!("index 132");
+                for i in known_character_coordinates[132].iter() {
+                    println!(
+                        "left:{}px;top:{}px;width:{}px;height:{}px;",
+                        i.0, i.1, i.2, i.3
+                    );
+                }
+
+                println!("index 252");
+                for i in known_character_coordinates[252].iter() {
                     println!(
                         "left:{}px;top:{}px;width:{}px;height:{}px;",
                         i.0, i.1, i.2, i.3
@@ -344,7 +367,7 @@ impl fmt::Display for HTSError {
 }
 
 // separate the circle into four quarters. ABCD, and go anti-clockwise, starting from the top.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum Section {
     A,
     B,
@@ -367,9 +390,9 @@ impl Section {
         let (c_x, c_y) = (centre.0, centre.1);
 
         // debug
-        println!("centre: {:?}", centre);
-        println!("known_cc: {:?}", known_cc);
-        println!("prev: {:?}", prev);
+        // println!("centre: {:?}", centre);
+        // println!("known_cc: {:?}", known_cc);
+        // println!("prev: {:?}", prev);
 
         let mut next_coordinates: Vec<(i32, i32, i32, i32)> = Vec::new();
 
@@ -384,9 +407,10 @@ impl Section {
                     {
                         continue;
                     }
+
                     let (x, y, w, h) = (i.0, i.1, i.2, i.3);
 
-                    if x <= cc_x && y >= cc_y && y <= c_y {
+                    if x <= cc_x && y >= cc_y {
                         if y <= smallest_y {
                             smallest_y = y;
                             next_coordinates.clear();
@@ -396,16 +420,70 @@ impl Section {
                 }
             }
             Section::B => {
-                next_coordinates.push((0, 0, 0, 0));
-                // return Ok(next_coordinate);
+                let mut smallest_x = 50000;
+
+                for i in all_coordinates.iter() {
+                    if known_cc
+                        .iter()
+                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
+                    {
+                        continue;
+                    }
+
+                    let (x, y, w, h) = (i.0, i.1, i.2, i.3);
+
+                    if x >= cc_x && y >= cc_y {
+                        if x <= smallest_x {
+                            smallest_x = x;
+                            next_coordinates.clear();
+                            next_coordinates.push((x, y, w, h));
+                        }
+                    }
+                }
             }
             Section::C => {
-                next_coordinates.push((0, 0, 0, 0));
-                // return Ok(next_coordinate);
+                let mut largest_y = -50000;
+
+                for i in all_coordinates.iter() {
+                    if known_cc
+                        .iter()
+                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
+                    {
+                        continue;
+                    }
+
+                    let (x, y, w, h) = (i.0, i.1, i.2, i.3);
+
+                    if x >= cc_x && y <= cc_y {
+                        if y >= largest_y {
+                            largest_y = y;
+                            next_coordinates.clear();
+                            next_coordinates.push((x, y, w, h));
+                        }
+                    }
+                }
             }
             Section::D => {
-                next_coordinates.push((0, 0, 0, 0));
-                // return Ok(next_coordinate);
+                let mut largest_x = -50000;
+
+                for i in all_coordinates.iter() {
+                    if known_cc
+                        .iter()
+                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
+                    {
+                        continue;
+                    }
+
+                    let (x, y, w, h) = (i.0, i.1, i.2, i.3);
+
+                    if x <= cc_x && y <= cc_y {
+                        if x >= largest_x {
+                            largest_x = x;
+                            next_coordinates.clear();
+                            next_coordinates.push((x, y, w, h));
+                        }
+                    }
+                }
             }
         }
 
@@ -465,8 +543,11 @@ fn analyze_character(
                     continue 'inner;
                 }
 
-                // 30 deg E
-                if ((x == cc_w + cc_x && y == cc_y - h) || (x == cc_x - w && y == cc_y - cc_h)) {
+                // 30 deg E & 40 deg 4. idek visualizing tetris as i make these up.
+                if (x == cc_w + cc_x && y == cc_y - h)
+                    || (x == cc_x - w && y == cc_y - cc_h)
+                    || (x == cc_x - w && y == cc_y - h)
+                {
                     new_coordinates.insert((x, y, w, h));
 
                     continue 'inner;
@@ -507,6 +588,12 @@ fn analyze_character(
                     continue 'inner;
                 }
 
+                if (x <= cc_x + cc_w && x >= cc_x - w) && (y >= cc_y - h && y <= cc_y - h + cc_h) {
+                    new_coordinates.insert((x, y, w, h));
+
+                    continue 'inner;
+                }
+
                 // once you know how to analyze all fifteen upright characters from the top, chances are you'll be able to easily analyze the other characters as well regardless of position.
             }
 
@@ -535,7 +622,7 @@ fn analyze_character(
         // );
 
         if new_len_of_known == initial_len_of_known {
-            println!("breaking main loop now...");
+            // println!("breaking main loop now...");
             break 'main_loop;
         }
     }
