@@ -97,7 +97,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // insert cookies manually
     headers.insert(
         COOKIE,
-        "HackThisSite=l9f5v513cg0bnvu28kefdk7j77".parse().unwrap(),
+        "HackThisSite=tmbbj5t90goa67jg065aujtuj7".parse().unwrap(),
     );
 
     let res_body = client
@@ -255,7 +255,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let mut sec_index = 0;
 
                 // debug purposes
-                // let mut stop_at_nine = 0;
+                let mut stop_at_nine = 0;
+
+                // fix performance issue
+                let mut all_coord_except_known = all_coordinates.clone();
+                all_coord_except_known.retain(|x| !prev_coord.contains(x));
 
                 // read in circular. after every ninth iteration, the section changes. there are 253 characters. looping 252 times because the first char is already provided
                 for i in 1..253 {
@@ -272,12 +276,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }
 
                     let next_coord = section
-                        .get_next(
-                            known_character_coordinates.clone(),
-                            prev_coord.clone(),
-                            all_coordinates.clone(),
-                            centre,
-                        )
+                        .get_next(prev_coord, all_coord_except_known.clone())
                         .unwrap();
 
                     let mut nxt_coord_vec = Vec::new();
@@ -289,15 +288,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     initial_coordinates.push(next_coord);
 
                     let all_coord_of_next =
-                        analyze_character(all_coordinates.clone(), initial_coordinates);
+                        analyze_character(all_coord_except_known.clone(), initial_coordinates);
 
-                    known_character_coordinates.push(all_coord_of_next);
+                    known_character_coordinates.push(all_coord_of_next.clone());
+
+                    all_coord_except_known.retain(|x| !all_coord_of_next.contains(x));
 
                     // debug
-                    // stop_at_nine += 1;
-                    // if stop_at_nine == 37 {
-                    //     break;
-                    // }
+
+                    println!("iteration {} over", i);
+                    stop_at_nine += 1;
+                    if stop_at_nine == 55 {
+                        break;
+                    }
                 }
 
                 // debug
@@ -315,15 +318,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 println!("last section read: {:?}", &sections[sec_index]);
 
                 // debug
-                println!("index 18");
-                for i in known_character_coordinates[18].iter() {
-                    println!(
-                        "left:{}px;top:{}px;width:{}px;height:{}px;",
-                        i.0, i.1, i.2, i.3
-                    );
-                }
-
-                println!("index 28");
+                println!("index 36");
                 for i in known_character_coordinates[36].iter() {
                     println!(
                         "left:{}px;top:{}px;width:{}px;height:{}px;",
@@ -331,21 +326,29 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     );
                 }
 
-                println!("index 132");
-                for i in known_character_coordinates[132].iter() {
-                    println!(
-                        "left:{}px;top:{}px;width:{}px;height:{}px;",
-                        i.0, i.1, i.2, i.3
-                    );
-                }
+                // println!("index 28");
+                // for i in known_character_coordinates[36].iter() {
+                //     println!(
+                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
+                //         i.0, i.1, i.2, i.3
+                //     );
+                // }
 
-                println!("index 252");
-                for i in known_character_coordinates[252].iter() {
-                    println!(
-                        "left:{}px;top:{}px;width:{}px;height:{}px;",
-                        i.0, i.1, i.2, i.3
-                    );
-                }
+                // println!("index 132");
+                // for i in known_character_coordinates[132].iter() {
+                //     println!(
+                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
+                //         i.0, i.1, i.2, i.3
+                //     );
+                // }
+
+                // println!("index 252");
+                // for i in known_character_coordinates[252].iter() {
+                //     println!(
+                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
+                //         i.0, i.1, i.2, i.3
+                //     );
+                // }
             }
         }
     }
@@ -378,16 +381,12 @@ enum Section {
 impl Section {
     fn get_next(
         &self,
-        known_cc: Vec<Vec<(i32, i32, i32, i32)>>,
         prev: Vec<(i32, i32, i32, i32)>,
         all_coordinates: Vec<(i32, i32, i32, i32)>,
-        centre: (i32, i32),
     ) -> Result<(i32, i32, i32, i32), HTSError> {
         // get random coordinate from the previous character
         let cc = prev[0];
         let (cc_x, cc_y) = (cc.0, cc.1);
-
-        let (c_x, c_y) = (centre.0, centre.1);
 
         // debug
         // println!("centre: {:?}", centre);
@@ -401,13 +400,6 @@ impl Section {
                 let mut smallest_y = 50000;
 
                 for i in all_coordinates.iter() {
-                    if known_cc
-                        .iter()
-                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
-                    {
-                        continue;
-                    }
-
                     let (x, y, w, h) = (i.0, i.1, i.2, i.3);
 
                     if x <= cc_x && y >= cc_y {
@@ -423,13 +415,6 @@ impl Section {
                 let mut smallest_x = 50000;
 
                 for i in all_coordinates.iter() {
-                    if known_cc
-                        .iter()
-                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
-                    {
-                        continue;
-                    }
-
                     let (x, y, w, h) = (i.0, i.1, i.2, i.3);
 
                     if x >= cc_x && y >= cc_y {
@@ -445,13 +430,6 @@ impl Section {
                 let mut largest_y = -50000;
 
                 for i in all_coordinates.iter() {
-                    if known_cc
-                        .iter()
-                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
-                    {
-                        continue;
-                    }
-
                     let (x, y, w, h) = (i.0, i.1, i.2, i.3);
 
                     if x >= cc_x && y <= cc_y {
@@ -467,13 +445,6 @@ impl Section {
                 let mut largest_x = -50000;
 
                 for i in all_coordinates.iter() {
-                    if known_cc
-                        .iter()
-                        .any(|inner_vec| inner_vec.iter().any(|k| k == i))
-                    {
-                        continue;
-                    }
-
                     let (x, y, w, h) = (i.0, i.1, i.2, i.3);
 
                     if x <= cc_x && y <= cc_y {
