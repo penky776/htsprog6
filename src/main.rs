@@ -2,7 +2,7 @@ use std::{collections::HashSet, error::Error, f64::consts::PI, fmt, fs::File, io
 
 use reqwest::header::{HeaderMap, COOKIE};
 
-enum Character {
+enum Character_ID {
     A,
     B,
     C,
@@ -21,39 +21,6 @@ enum Character {
     Nine,
 }
 
-struct Letter {
-    what_am_i: Character,
-    val: String,
-}
-
-struct Number {
-    what_am_i: Character,
-    val: u32,
-}
-
-// TODO
-impl Character {
-    fn identify_char(&self) {
-        let methods = [Self::is_one()]; // add all methods here
-    }
-
-    fn is_one() -> bool {
-        return false;
-    }
-
-    fn is_two(
-        all_coordinates: Vec<(i32, i32, i32, i32)>,
-        curves: Vec<(i32, i32, i32, i32)>,
-        lines: Vec<(i32, i32, i32, i32)>,
-    ) -> bool {
-        return false;
-    }
-
-    fn is_a() -> bool {
-        return false;
-    }
-}
-
 struct Coordinates {
     x: i32,
     y: i32,
@@ -62,29 +29,206 @@ struct Coordinates {
 }
 
 impl Coordinates {
-    fn is_arc(&self, angle: i32) {}
-
-    fn is_line(&self, angle: i32) {}
+    // if it's not an arc, then it's a line
+    fn is_arc(&self, arcs: Vec<(i32, i32, i32, i32)>) -> bool {
+        if self.w == 1 && self.h == 1 {
+            arcs.iter().any(|i| i.0 == self.x && i.1 == self.y)
+        } else {
+            false
+        }
+    }
 }
 
-enum Shape {
-    Arc,
-    Line,
+struct Character {
+    id: Character_ID,
+    val: String,
 }
 
-struct Arc {
-    x: i32,
-    y: i32,
-    w: i32,
-    h: i32,
+struct CharParams {
+    coordinates: Vec<(i32, i32, i32, i32)>,
 }
 
-struct Line {
-    x: i32,
-    y: i32,
-    w: i32,
-    h: i32,
+// TODO
+impl Character_ID {
+    fn identify_char(
+        &self,
+        char_coords: Vec<(i32, i32, i32, i32)>,
+        arcs: Vec<(i32, i32, i32, i32)>,
+    ) {
+        // characters that can have both curves and lines: B, D, 5, 2, 9, 0, C, 8, 6, 3
+        let methods: [fn(CharParams) -> (bool, Character); 10] = [
+            Self::is_zero,
+            Self::is_two,
+            Self::is_three,
+            Self::is_five,
+            Self::is_six,
+            Self::is_eight,
+            Self::is_nine,
+            Self::is_b,
+            Self::is_c,
+            Self::is_d,
+        ];
+
+        // characters with no curves: 4, 1, 7, E, F, A
+        let methods_if_no_arcs: [fn(CharParams) -> (bool, Character); 6] = [
+            Self::is_one,
+            Self::is_four,
+            Self::is_seven,
+            Self::is_a,
+            Self::is_e,
+            Self::is_f,
+        ];
+
+        // check if any arcs
+        let arcs_present = char_coords.iter().any(|i| {
+            let coordinates = Coordinates {
+                x: i.0,
+                y: i.1,
+                w: i.2,
+                h: i.3,
+            };
+            coordinates.is_arc(arcs.clone())
+        });
+
+        if arcs_present {
+
+            // TODO
+        } else {
+
+            // TODO
+        }
+    }
+
+    fn is_zero(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_one(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_two(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_three(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_four(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_five(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_six(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_seven(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_eight(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_nine(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_a(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_b(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_c(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_d(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_e(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
+
+    fn is_f(params: CharParams) -> (bool, Character) {
+        let character = Character {
+            id: Self::Zero,
+            val: String::from("0"),
+        };
+        return (false, character);
+    }
 }
+
+const COOKIES: &str = "HackThisSite=5lrv36opuulf1aefqj0ctm84t6";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -95,10 +239,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut headers = HeaderMap::new();
 
     // insert cookies manually
-    headers.insert(
-        COOKIE,
-        "HackThisSite=tmbbj5t90goa67jg065aujtuj7".parse().unwrap(),
-    );
+    headers.insert(COOKIE, COOKIES.parse().unwrap());
 
     let res_body = client
         .get(url)
@@ -137,6 +278,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 // println!("{:?}", draw_data_array); // debugging
 
+                // curve refers to arc
                 // the tuple has a format of (left, top, width, height) where (left, top) are positions in the xy plane
                 let mut curves: Vec<(i32, i32, i32, i32)> = Vec::new();
 
@@ -298,33 +440,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                     println!("iteration {} over", i);
                     stop_at_nine += 1;
-                    if stop_at_nine == 55 {
+                    if stop_at_nine == 9 {
                         break;
                     }
                 }
 
+                println!("last section read: {:?}", &sections[sec_index]);
+
                 // debug
-                // for cc in known_character_coordinates.iter() {
-                // eprintln!("start");
-                // for i in cc.iter() {
+                // println!("index 36");
+                // for i in known_character_coordinates[36].iter() {
                 //     println!(
                 //         "left:{}px;top:{}px;width:{}px;height:{}px;",
                 //         i.0, i.1, i.2, i.3
                 //     );
                 // }
-                // eprintln!("end");
-                // }
 
-                println!("last section read: {:?}", &sections[sec_index]);
-
-                // debug
-                println!("index 36");
-                for i in known_character_coordinates[36].iter() {
-                    println!(
-                        "left:{}px;top:{}px;width:{}px;height:{}px;",
-                        i.0, i.1, i.2, i.3
-                    );
-                }
+                // println!("no. of curves: {:?}", curves.len());
 
                 // println!("index 28");
                 // for i in known_character_coordinates[36].iter() {
@@ -389,8 +521,6 @@ impl Section {
         let (cc_x, cc_y) = (cc.0, cc.1);
 
         // debug
-        // println!("centre: {:?}", centre);
-        // println!("known_cc: {:?}", known_cc);
         // println!("prev: {:?}", prev);
 
         let mut next_coordinates: Vec<(i32, i32, i32, i32)> = Vec::new();
