@@ -2,6 +2,22 @@ use std::{collections::HashSet, error::Error, f64::consts::PI, fmt, fs::File, io
 
 use reqwest::header::{HeaderMap, COOKIE};
 
+#[derive(Debug)]
+enum HTSError {
+    CouldNotFindNext,
+    CharacterUnrecognizable,
+}
+
+impl fmt::Display for HTSError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            HTSError::CouldNotFindNext => write!(f, "unable to find next coordinate"),
+            HTSError::CharacterUnrecognizable => write!(f, "unable to identify character"),
+        }
+    }
+}
+
+#[derive(Debug)]
 enum Character_ID {
     A,
     B,
@@ -39,22 +55,28 @@ impl Coordinates {
     }
 }
 
+#[derive(Debug)]
 struct Character {
     id: Character_ID,
     val: String,
 }
 
+#[derive(Debug, Clone)]
 struct CharParams {
     coordinates: Vec<(i32, i32, i32, i32)>,
+    angle: i32,
+    section: Section,
 }
 
 // TODO
 impl Character_ID {
     fn identify_char(
         &self,
+        angle: i32,
         char_coords: Vec<(i32, i32, i32, i32)>,
         arcs: Vec<(i32, i32, i32, i32)>,
-    ) {
+        section: Section,
+    ) -> Result<Character, HTSError> {
         // characters that can have both curves and lines: B, D, 5, 2, 9, 0, C, 8, 6, 3
         let methods: [fn(CharParams) -> (bool, Character); 10] = [
             Self::is_zero,
@@ -69,14 +91,15 @@ impl Character_ID {
             Self::is_d,
         ];
 
-        // characters with no curves: 4, 1, 7, E, F, A
+        // the order of this array is deliberate
+        // characters with no curves: E, F, A, 1, 7, 4
         let methods_if_no_arcs: [fn(CharParams) -> (bool, Character); 6] = [
-            Self::is_one,
-            Self::is_four,
-            Self::is_seven,
-            Self::is_a,
             Self::is_e,
             Self::is_f,
+            Self::is_one,
+            Self::is_a,
+            Self::is_seven,
+            Self::is_four,
         ];
 
         // check if any arcs
@@ -90,13 +113,36 @@ impl Character_ID {
             coordinates.is_arc(arcs.clone())
         });
 
+        let method_params = CharParams {
+            coordinates: char_coords,
+            angle,
+            section,
+        };
+
         if arcs_present {
+            for method in methods {
+                let (is_character, character) = (method)(method_params.clone());
 
-            // TODO
+                if is_character {
+                    return Ok(character);
+                }
+            }
         } else {
+            for method in methods_if_no_arcs {
+                let (is_character, character) = (method)(method_params.clone());
 
-            // TODO
+                if is_character {
+                    return Ok(character);
+                }
+            }
         }
+
+        // debug
+        let test_character = Character {
+            id: Self::A,
+            val: String::from("A"),
+        };
+        return Ok(test_character);
     }
 
     fn is_zero(params: CharParams) -> (bool, Character) {
@@ -109,126 +155,140 @@ impl Character_ID {
 
     fn is_one(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::One,
+            val: String::from("1"),
         };
+
+        // flat at the bottom
+        if params.angle == 0 {}
+
+        match params.section {
+            Section::A => {}
+
+            Section::B => {}
+
+            Section::C => {}
+
+            Section::D => {}
+        }
+
         return (false, character);
     }
 
     fn is_two(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Two,
+            val: String::from("2"),
         };
         return (false, character);
     }
 
     fn is_three(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Three,
+            val: String::from("3"),
         };
         return (false, character);
     }
 
     fn is_four(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Four,
+            val: String::from("4"),
         };
         return (false, character);
     }
 
     fn is_five(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Five,
+            val: String::from("5"),
         };
         return (false, character);
     }
 
     fn is_six(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Six,
+            val: String::from("6"),
         };
         return (false, character);
     }
 
     fn is_seven(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Seven,
+            val: String::from("7"),
         };
         return (false, character);
     }
 
     fn is_eight(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Eight,
+            val: String::from("8"),
         };
         return (false, character);
     }
 
     fn is_nine(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::Nine,
+            val: String::from("9"),
         };
         return (false, character);
     }
 
     fn is_a(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::A,
+            val: String::from("A"),
         };
         return (false, character);
     }
 
     fn is_b(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::B,
+            val: String::from("B"),
         };
         return (false, character);
     }
 
     fn is_c(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::C,
+            val: String::from("C"),
         };
         return (false, character);
     }
 
     fn is_d(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::D,
+            val: String::from("D"),
         };
         return (false, character);
     }
 
     fn is_e(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::E,
+            val: String::from("E"),
         };
         return (false, character);
     }
 
     fn is_f(params: CharParams) -> (bool, Character) {
         let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
+            id: Self::F,
+            val: String::from("F"),
         };
         return (false, character);
     }
 }
 
-const COOKIES: &str = "HackThisSite=5lrv36opuulf1aefqj0ctm84t6";
+const COOKIES: &str = "HackThisSite=me8kiqai4rr22q6otcpddmmba7";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -321,38 +381,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // println!("{:?}", curves);
                 // println!("line coordinates: {:?}", lines);
 
-                // find centre
                 let mut all_coordinates = curves.clone();
                 all_coordinates.append(&mut lines);
 
                 let all_y_values: Vec<i32> = all_coordinates.iter().map(|i| i.1).collect();
-                let all_x_values: Vec<i32> = all_coordinates.iter().map(|i| i.0).collect();
-
-                let max_y = all_y_values.clone().into_iter().max().unwrap(); // the 'top' value for the bottom-most character
                 let min_y = all_y_values.clone().into_iter().min().unwrap(); // the 'top' value for the top-most character
-
-                let max_x = all_x_values.clone().into_iter().max().unwrap();
-                let min_x = all_x_values.clone().into_iter().min().unwrap();
-
-                println!(
-                    "the 'top' value for the bottom-most character: {:?}\nthe 'top' value for the top-most character: {:?}
-                     ",
-                     max_y,
-                     min_y
-                );
-
-                println!("the 'left' value for the right-most character: {:?}\nthe 'left' value for the left-most character: {:?}",
-                max_x, min_x
-            );
-
-                let diameter_y = max_y - min_y;
-
-                let centre_x = (diameter_y / 2) + min_x;
-                let centre_y = (diameter_y / 2) + min_y;
-
-                let centre = (centre_x, centre_y);
-
-                println!("Coordinates for centre is x:{}, y:{}", centre_x, centre_y);
 
                 // get one of the coordinates from the first top-most character
 
@@ -366,30 +399,26 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }
                 }
 
-                let mut coordinates_left = (0, 0, 0, 0);
-                for i in all_coordinates.iter() {
-                    if i.0 == min_x {
-                        coordinates_left = (i.0, i.1, i.2, i.3);
-                        break;
-                    }
-                }
-
-                println!("the leftmost coordinate: {:?}", coordinates_left); // debug
-
-                println!("the topmost coordinates: {:?}", max_coordinates); // debug
-
                 let first_char = analyze_character(all_coordinates.clone(), max_coordinates);
 
                 // debug
-                for i in first_char.iter() {
-                    println!(
-                        "left:{}px;top:{}px;width:{}px;height:{}px;",
-                        i.0, i.1, i.2, i.3
-                    );
-                }
+                // for i in first_char.iter() {
+                //     println!(
+                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
+                //         i.0, i.1, i.2, i.3
+                //     );
+                // }
 
-                let mut known_character_coordinates: Vec<Vec<(i32, i32, i32, i32)>> = Vec::new();
-                known_character_coordinates.push(first_char.clone());
+                // (vector of coordinates, index, angle, section)
+                let mut known_character_coordinates: Vec<(
+                    Vec<(i32, i32, i32, i32)>,
+                    i32,
+                    i32,
+                    Section,
+                )> = Vec::new();
+
+                let mut angle = 0;
+                known_character_coordinates.push((first_char.clone(), 0, angle, Section::A));
 
                 let mut prev_coord = first_char;
                 let sections = [Section::A, Section::B, Section::C, Section::D];
@@ -432,15 +461,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     let all_coord_of_next =
                         analyze_character(all_coord_except_known.clone(), initial_coordinates);
 
-                    known_character_coordinates.push(all_coord_of_next.clone());
+                    if angle == 350 {
+                        angle = 0;
+                    } else {
+                        angle = angle + 10;
+                    }
 
+                    known_character_coordinates.push((
+                        all_coord_of_next.clone(),
+                        i,
+                        angle,
+                        *section,
+                    ));
                     all_coord_except_known.retain(|x| !all_coord_of_next.contains(x));
 
                     // debug
 
                     println!("iteration {} over", i);
                     stop_at_nine += 1;
-                    if stop_at_nine == 9 {
+                    if stop_at_nine == 40 {
                         break;
                     }
                 }
@@ -448,23 +487,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 println!("last section read: {:?}", &sections[sec_index]);
 
                 // debug
-                // println!("index 36");
-                // for i in known_character_coordinates[36].iter() {
-                //     println!(
-                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
-                //         i.0, i.1, i.2, i.3
-                //     );
-                // }
+                println!("index 9");
+                println!("angle: {:?}", known_character_coordinates[9].2);
+                for i in known_character_coordinates[9].0.iter() {
+                    println!(
+                        "left:{}px;top:{}px;width:{}px;height:{}px;",
+                        i.0, i.1, i.2, i.3
+                    );
+                }
 
                 // println!("no. of curves: {:?}", curves.len());
-
-                // println!("index 28");
-                // for i in known_character_coordinates[36].iter() {
-                //     println!(
-                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
-                //         i.0, i.1, i.2, i.3
-                //     );
-                // }
 
                 // println!("index 132");
                 // for i in known_character_coordinates[132].iter() {
@@ -475,7 +507,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // }
 
                 // println!("index 252");
-                // for i in known_character_coordinates[252].iter() {
+                // println!("angle: {:?}", known_character_coordinates[252].2);
+                // for i in known_character_coordinates[252].0.iter() {
                 //     println!(
                 //         "left:{}px;top:{}px;width:{}px;height:{}px;",
                 //         i.0, i.1, i.2, i.3
@@ -488,21 +521,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[derive(Debug)]
-enum HTSError {
-    CouldNotFindNext,
-}
-
-impl fmt::Display for HTSError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            HTSError::CouldNotFindNext => write!(f, "unable to find next coordinate"),
-        }
-    }
-}
-
 // separate the circle into four quarters. ABCD, and go anti-clockwise, starting from the top.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 enum Section {
     A,
     B,
