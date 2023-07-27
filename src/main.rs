@@ -2,8 +2,12 @@ use std::{collections::HashSet, error::Error, f64::consts::PI, fmt, fs::File, io
 
 use reqwest::header::{HeaderMap, COOKIE};
 
+use crate::analyze::Analyze;
+
+pub mod analyze;
+
 #[derive(Debug)]
-enum HTSError {
+pub enum HTSError {
     CouldNotFindNext,
     CharacterUnrecognizable,
 }
@@ -17,278 +21,7 @@ impl fmt::Display for HTSError {
     }
 }
 
-#[derive(Debug)]
-enum Character_ID {
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-}
-
-struct Coordinates {
-    x: i32,
-    y: i32,
-    w: i32,
-    h: i32,
-}
-
-impl Coordinates {
-    // if it's not an arc, then it's a line
-    fn is_arc(&self, arcs: Vec<(i32, i32, i32, i32)>) -> bool {
-        if self.w == 1 && self.h == 1 {
-            arcs.iter().any(|i| i.0 == self.x && i.1 == self.y)
-        } else {
-            false
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Character {
-    id: Character_ID,
-    val: String,
-}
-
-#[derive(Debug, Clone)]
-struct CharParams {
-    coordinates: Vec<(i32, i32, i32, i32)>,
-    angle: i32,
-    section: Section,
-}
-
-// TODO
-impl Character_ID {
-    fn identify_char(
-        &self,
-        angle: i32,
-        char_coords: Vec<(i32, i32, i32, i32)>,
-        arcs: Vec<(i32, i32, i32, i32)>,
-        section: Section,
-    ) -> Result<Character, HTSError> {
-        // characters that can have both curves and lines: B, D, 5, 2, 9, 0, C, 8, 6, 3
-        let methods: [fn(CharParams) -> (bool, Character); 10] = [
-            Self::is_zero,
-            Self::is_two,
-            Self::is_three,
-            Self::is_five,
-            Self::is_six,
-            Self::is_eight,
-            Self::is_nine,
-            Self::is_b,
-            Self::is_c,
-            Self::is_d,
-        ];
-
-        // the order of this array is deliberate
-        // characters with no curves: E, F, A, 1, 7, 4
-        let methods_if_no_arcs: [fn(CharParams) -> (bool, Character); 6] = [
-            Self::is_e,
-            Self::is_f,
-            Self::is_one,
-            Self::is_a,
-            Self::is_seven,
-            Self::is_four,
-        ];
-
-        // check if any arcs
-        let arcs_present = char_coords.iter().any(|i| {
-            let coordinates = Coordinates {
-                x: i.0,
-                y: i.1,
-                w: i.2,
-                h: i.3,
-            };
-            coordinates.is_arc(arcs.clone())
-        });
-
-        let method_params = CharParams {
-            coordinates: char_coords,
-            angle,
-            section,
-        };
-
-        if arcs_present {
-            for method in methods {
-                let (is_character, character) = (method)(method_params.clone());
-
-                if is_character {
-                    return Ok(character);
-                }
-            }
-        } else {
-            for method in methods_if_no_arcs {
-                let (is_character, character) = (method)(method_params.clone());
-
-                if is_character {
-                    return Ok(character);
-                }
-            }
-        }
-
-        // debug
-        let test_character = Character {
-            id: Self::A,
-            val: String::from("A"),
-        };
-        return Ok(test_character);
-    }
-
-    fn is_zero(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Zero,
-            val: String::from("0"),
-        };
-        return (false, character);
-    }
-
-    fn is_one(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::One,
-            val: String::from("1"),
-        };
-
-        // flat at the bottom
-        if params.angle == 0 {}
-
-        match params.section {
-            Section::A => {}
-
-            Section::B => {}
-
-            Section::C => {}
-
-            Section::D => {}
-        }
-
-        return (false, character);
-    }
-
-    fn is_two(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Two,
-            val: String::from("2"),
-        };
-        return (false, character);
-    }
-
-    fn is_three(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Three,
-            val: String::from("3"),
-        };
-        return (false, character);
-    }
-
-    fn is_four(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Four,
-            val: String::from("4"),
-        };
-        return (false, character);
-    }
-
-    fn is_five(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Five,
-            val: String::from("5"),
-        };
-        return (false, character);
-    }
-
-    fn is_six(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Six,
-            val: String::from("6"),
-        };
-        return (false, character);
-    }
-
-    fn is_seven(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Seven,
-            val: String::from("7"),
-        };
-        return (false, character);
-    }
-
-    fn is_eight(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Eight,
-            val: String::from("8"),
-        };
-        return (false, character);
-    }
-
-    fn is_nine(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::Nine,
-            val: String::from("9"),
-        };
-        return (false, character);
-    }
-
-    fn is_a(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::A,
-            val: String::from("A"),
-        };
-        return (false, character);
-    }
-
-    fn is_b(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::B,
-            val: String::from("B"),
-        };
-        return (false, character);
-    }
-
-    fn is_c(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::C,
-            val: String::from("C"),
-        };
-        return (false, character);
-    }
-
-    fn is_d(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::D,
-            val: String::from("D"),
-        };
-        return (false, character);
-    }
-
-    fn is_e(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::E,
-            val: String::from("E"),
-        };
-        return (false, character);
-    }
-
-    fn is_f(params: CharParams) -> (bool, Character) {
-        let character = Character {
-            id: Self::F,
-            val: String::from("F"),
-        };
-        return (false, character);
-    }
-}
-
-const COOKIES: &str = "HackThisSite=me8kiqai4rr22q6otcpddmmba7";
+const COOKIES: &str = "HackThisSite=en009mtgfbq147ncvir53ipsv5";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -479,17 +212,40 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                     println!("iteration {} over", i);
                     stop_at_nine += 1;
-                    if stop_at_nine == 40 {
-                        break;
-                    }
+                    // if stop_at_nine == 253 {
+                    //     break;
+                    // }
                 }
 
                 println!("last section read: {:?}", &sections[sec_index]);
 
                 // debug
-                println!("index 9");
-                println!("angle: {:?}", known_character_coordinates[9].2);
-                for i in known_character_coordinates[9].0.iter() {
+
+                // analyze::Character_ID::Coordinates(known_character_coordinates[9].0.clone())
+                //     .identify_char(
+                //         known_character_coordinates[9].2.clone(),
+                //         known_character_coordinates[9].0.clone(),
+                //         curves,
+                //         known_character_coordinates[9].3.clone(),
+                //     )
+                //     .unwrap();
+
+                // (vector of coordinates, index, angle, section)
+
+                let test = Analyze {
+                    coordinates_vec: known_character_coordinates[198].0.clone(),
+                    coordinates_angle: known_character_coordinates[198].2,
+                    section: known_character_coordinates[198].3,
+                };
+
+                // test.identify_char(curves);
+
+                println!("char identified = {:?}", test.identify_char(curves));
+
+                // debug
+                println!("index 108");
+                println!("angle: {:?}", known_character_coordinates[198].2);
+                for i in known_character_coordinates[198].0.iter() {
                     println!(
                         "left:{}px;top:{}px;width:{}px;height:{}px;",
                         i.0, i.1, i.2, i.3
@@ -506,14 +262,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 //     );
                 // }
 
-                // println!("index 252");
-                // println!("angle: {:?}", known_character_coordinates[252].2);
-                // for i in known_character_coordinates[252].0.iter() {
-                //     println!(
-                //         "left:{}px;top:{}px;width:{}px;height:{}px;",
-                //         i.0, i.1, i.2, i.3
-                //     );
-                // }
+                println!("index 252");
+                println!("angle: {:?}", known_character_coordinates[252].2);
+                for i in known_character_coordinates[252].0.iter() {
+                    println!(
+                        "left:{}px;top:{}px;width:{}px;height:{}px;",
+                        i.0, i.1, i.2, i.3
+                    );
+                }
             }
         }
     }
@@ -523,7 +279,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 // separate the circle into four quarters. ABCD, and go anti-clockwise, starting from the top.
 #[derive(PartialEq, Debug, Clone, Copy)]
-enum Section {
+pub enum Section {
     A,
     B,
     C,
