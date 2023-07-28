@@ -177,12 +177,12 @@ impl Analyze {
             }
         }
 
-        let largest_x = params.coordinates_vec.iter().map(|i| i.0).max().unwrap();
-        let mut largest_x_coords = Vec::new();
+        let highest_x = params.coordinates_vec.iter().map(|i| i.0).max().unwrap();
+        let mut highest_x_coords = Vec::new();
 
         for i in params.coordinates_vec.iter() {
-            if i.0 == largest_x {
-                largest_x_coords.push(i)
+            if i.0 == highest_x {
+                highest_x_coords.push(i)
             }
         }
 
@@ -213,7 +213,19 @@ impl Analyze {
             }
         } else if params.angle == 90 {
             // check if right-most coord is bottom
-            //
+            for i in highest_x_coords.iter() {
+                let (w, h) = (i.2, i.3);
+
+                if h > 1 && w == 1 {
+                    if params.coordinates_vec.len() == 4 {
+                        return (true, e);
+                    } else {
+                        return (true, one);
+                    }
+                } else if params.coordinates_vec.len() == 3 {
+                    return (true, f);
+                }
+            }          
         } else if params.angle == 180 {
             // check if flat at top
             for i in lowest_y_coords.iter() {
