@@ -79,7 +79,6 @@ impl Analyze {
     ) -> Result<Character, HTSError> {
         // characters that can have both curves and lines: B, D, 5, 2, 9, 0, C, 8, 6, 3
         let methods: [fn(CharParams) -> (bool, Character); 10] = [
-            Self::is_zero,
             Self::is_two,
             Self::is_three,
             Self::is_five,
@@ -89,6 +88,7 @@ impl Analyze {
             Self::is_b,
             Self::is_c,
             Self::is_d,
+            Self::is_zero,
         ];
 
         // the order of this array is deliberate
@@ -242,11 +242,26 @@ impl Analyze {
                 }
             }
         } else if params.angle == 270 {
-            //
+            // check if leftmost coordinates are vertical lines
+            for i in lowest_x_coords.iter() {
+                let (w, h) = (i.2, i.3);
+
+                if h > 1 && w == 1 {
+                    if params.coordinates_vec.len() == 4 {
+                        return (true, e);
+                    } else {
+                        return (true, one);
+                    }
+                } else if params.coordinates_vec.len() == 3 {
+                    return (true, f);
+                }
+            }
         }
 
         match params.section {
-            Section::A => {}
+            Section::A => {
+
+            }
 
             Section::B => {}
 
