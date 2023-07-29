@@ -21,7 +21,7 @@ impl fmt::Display for HTSError {
     }
 }
 
-const COOKIES: &str = "HackThisSite=enovpftro77pfrdofg9rd30363";
+const COOKIES: &str = "HackThisSite=9r1a4shs81vb36eq7k6vus8qg6";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

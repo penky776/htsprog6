@@ -1,7 +1,7 @@
 use crate::{HTSError, Section};
 
 #[derive(Debug, Clone)]
-pub enum Character_ID {
+pub enum CharacterID {
     A,
     B,
     C,
@@ -40,7 +40,7 @@ impl Coordinates {
 
 #[derive(Debug)]
 pub struct Character {
-    id: Character_ID,
+    id: CharacterID,
     val: String,
 }
 
@@ -78,7 +78,7 @@ impl Analyze {
         // section: Section,
     ) -> Result<Character, HTSError> {
         // characters that can have both curves and lines: B, D, 5, 2, 9, 0, C, 8, 6, 3
-        let methods: [fn(CharParams) -> (bool, Character); 10] = [
+        let methods: [fn(CharParams) -> Character; 10] = [
             Self::is_two,
             Self::is_three,
             Self::is_five,
@@ -93,7 +93,7 @@ impl Analyze {
 
         // the order of this array is deliberate
         // characters with no curves: E, F, A, 1, 7, 4
-        let methods_if_no_arcs: [fn(CharParams) -> (bool, Character); 4] = [
+        let methods_if_no_arcs: [fn(CharParams) -> Character; 4] = [
             Self::is_a,
             Self::is_seven,
             Self::is_four,
@@ -119,43 +119,39 @@ impl Analyze {
 
         if arcs_present {
             for method in methods {
-                let (is_character, character) = (method)(method_params.clone());
+                let character = (method)(method_params.clone());
 
-                if is_character {
-                    return Ok(character);
-                }
+                return Ok(character);
             }
         } else {
             for method in methods_if_no_arcs {
-                let (is_character, character) = (method)(method_params.clone());
+                let character = (method)(method_params.clone());
 
-                if is_character {
-                    return Ok(character);
-                }
+                return Ok(character);
             }
         }
 
         // debug
         let test_character = Character {
-            id: Character_ID::A,
+            id: CharacterID::A,
             val: String::from("A"),
         };
         return Ok(test_character);
     }
 
-    fn is_e_f_or_one(params: CharParams) -> (bool, Character) {
+    fn is_e_f_or_one(params: CharParams) -> Character {
         let one = Character {
-            id: Character_ID::One,
+            id: CharacterID::One,
             val: String::from("1"),
         };
 
         let f = Character {
-            id: Character_ID::F,
+            id: CharacterID::F,
             val: String::from("F"),
         };
 
         let e = Character {
-            id: Character_ID::E,
+            id: CharacterID::E,
             val: String::from("E"),
         };
 
@@ -198,69 +194,99 @@ impl Analyze {
         if params.angle == 0 {
             // check if flat at bottom
             for i in highest_y_coords.iter() {
-                let (w, h) = (i.2, i.3);
+                let (cc_w, cc_h) = (i.2, i.3);
 
-                if w > 1 && h == 1 {
+                if cc_w > 1 && cc_h == 1 {
                     // is one or e
                     if params.coordinates_vec.len() == 4 {
-                        return (true, e);
+                        return e;
                     } else {
-                        return (true, one);
+                        return one;
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return (true, f);
+                    return f;
                 }
             }
         } else if params.angle == 90 {
             // check if right-most coord is bottom
             for i in highest_x_coords.iter() {
-                let (w, h) = (i.2, i.3);
+                let (cc_w, cc_h) = (i.2, i.3);
 
-                if h > 1 && w == 1 {
+                if cc_h > 1 && cc_w == 1 {
                     if params.coordinates_vec.len() == 4 {
-                        return (true, e);
+                        return e;
                     } else {
-                        return (true, one);
+                        return one;
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return (true, f);
+                    return f;
                 }
-            }          
+            }
         } else if params.angle == 180 {
             // check if flat at top
             for i in lowest_y_coords.iter() {
-                let (w, h) = (i.2, i.3);
+                let (cc_w, cc_h) = (i.2, i.3);
 
-                if w > 1 && h == 1 {
+                if cc_w > 1 && cc_h == 1 {
                     if params.coordinates_vec.len() == 4 {
-                        return (true, e);
+                        return e;
                     } else {
-                        return (true, one);
+                        return one;
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return (true, f);
+                    return f;
                 }
             }
         } else if params.angle == 270 {
             // check if leftmost coordinates are vertical lines
             for i in lowest_x_coords.iter() {
-                let (w, h) = (i.2, i.3);
+                let (cc_w, cc_h) = (i.2, i.3);
 
-                if h > 1 && w == 1 {
+                if cc_h > 1 && cc_w == 1 {
                     if params.coordinates_vec.len() == 4 {
-                        return (true, e);
+                        return e;
                     } else {
-                        return (true, one);
+                        return one;
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return (true, f);
+                    return f;
                 }
             }
         }
 
         match params.section {
             Section::A => {
+                let coords = highest_x_coords[0]; // grab random coordinate
 
+                let (x, y) = (coords.0, coords.1);
+
+                let mut one_or_e = false;
+
+                // highest_x_coords
+                for i in params.coordinates_vec.iter() {
+                    let (cc_x, cc_y) = (i.0, i.1);
+
+                    // if even one coordinate exists that's an "ascending" slope (positive gradient)
+                    if cc_y > y && cc_x < x {
+                        one_or_e = true;
+                    }
+                }
+
+                if one_or_e {
+                    let coords = lowest_y_coords[0];
+                    let x = coords.0;
+
+                    for i in params.coordinates_vec.iter() {
+                        let (cc_x, cc_w) = (i.0, i.2);
+
+                        if cc_x <= x - cc_w {
+                            return e;
+                        }
+                    }
+                    return one;
+                } else {
+                    return f;
+                }
             }
 
             Section::B => {}
@@ -270,110 +296,110 @@ impl Analyze {
             Section::D => {}
         }
 
-        return (false, e);
+        return e;
     }
 
-    fn is_zero(params: CharParams) -> (bool, Character) {
+    fn is_zero(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Zero,
+            id: CharacterID::Zero,
             val: String::from("0"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_two(params: CharParams) -> (bool, Character) {
+    fn is_two(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Two,
+            id: CharacterID::Two,
             val: String::from("2"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_three(params: CharParams) -> (bool, Character) {
+    fn is_three(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Three,
+            id: CharacterID::Three,
             val: String::from("3"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_four(params: CharParams) -> (bool, Character) {
+    fn is_four(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Four,
+            id: CharacterID::Four,
             val: String::from("4"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_five(params: CharParams) -> (bool, Character) {
+    fn is_five(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Five,
+            id: CharacterID::Five,
             val: String::from("5"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_six(params: CharParams) -> (bool, Character) {
+    fn is_six(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Six,
+            id: CharacterID::Six,
             val: String::from("6"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_seven(params: CharParams) -> (bool, Character) {
+    fn is_seven(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Seven,
+            id: CharacterID::Seven,
             val: String::from("7"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_eight(params: CharParams) -> (bool, Character) {
+    fn is_eight(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Eight,
+            id: CharacterID::Eight,
             val: String::from("8"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_nine(params: CharParams) -> (bool, Character) {
+    fn is_nine(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::Nine,
+            id: CharacterID::Nine,
             val: String::from("9"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_a(params: CharParams) -> (bool, Character) {
+    fn is_a(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::A,
+            id: CharacterID::A,
             val: String::from("A"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_b(params: CharParams) -> (bool, Character) {
+    fn is_b(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::B,
+            id: CharacterID::B,
             val: String::from("B"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_c(params: CharParams) -> (bool, Character) {
+    fn is_c(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::C,
+            id: CharacterID::C,
             val: String::from("C"),
         };
-        return (false, character);
+        return character;
     }
 
-    fn is_d(params: CharParams) -> (bool, Character) {
+    fn is_d(params: CharParams) -> Character {
         let character = Character {
-            id: Character_ID::D,
+            id: CharacterID::D,
             val: String::from("D"),
         };
-        return (false, character);
+        return character;
     }
 }
