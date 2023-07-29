@@ -93,12 +93,8 @@ impl Analyze {
 
         // the order of this array is deliberate
         // characters with no curves: E, F, A, 1, 7, 4
-        let methods_if_no_arcs: [fn(CharParams) -> Character; 4] = [
-            Self::is_a,
-            Self::is_seven,
-            Self::is_four,
-            Self::is_e_f_or_one,
-        ];
+        let methods_if_no_arcs: [fn(CharParams) -> Character; 2] =
+            [Self::is_seven_a_or_four, Self::is_e_f_or_one];
 
         // check if any arcs
         let arcs_present = self.coordinates_vec.iter().any(|i| {
@@ -138,6 +134,8 @@ impl Analyze {
         };
         return Ok(test_character);
     }
+
+    // ----------------------------------methods if no arcs---------------------------------------
 
     fn is_e_f_or_one(params: CharParams) -> Character {
         let one = Character {
@@ -299,6 +297,16 @@ impl Analyze {
         return e;
     }
 
+    fn is_seven_a_or_four(params: CharParams) -> Character {
+        let character = Character {
+            id: CharacterID::Seven,
+            val: String::from("7"),
+        };
+        return character;
+    }
+
+    // ----------------------------------methods if arcs---------------------------------------
+
     fn is_zero(params: CharParams) -> Character {
         let character = Character {
             id: CharacterID::Zero,
@@ -323,14 +331,6 @@ impl Analyze {
         return character;
     }
 
-    fn is_four(params: CharParams) -> Character {
-        let character = Character {
-            id: CharacterID::Four,
-            val: String::from("4"),
-        };
-        return character;
-    }
-
     fn is_five(params: CharParams) -> Character {
         let character = Character {
             id: CharacterID::Five,
@@ -347,14 +347,6 @@ impl Analyze {
         return character;
     }
 
-    fn is_seven(params: CharParams) -> Character {
-        let character = Character {
-            id: CharacterID::Seven,
-            val: String::from("7"),
-        };
-        return character;
-    }
-
     fn is_eight(params: CharParams) -> Character {
         let character = Character {
             id: CharacterID::Eight,
@@ -367,14 +359,6 @@ impl Analyze {
         let character = Character {
             id: CharacterID::Nine,
             val: String::from("9"),
-        };
-        return character;
-    }
-
-    fn is_a(params: CharParams) -> Character {
-        let character = Character {
-            id: CharacterID::A,
-            val: String::from("A"),
         };
         return character;
     }

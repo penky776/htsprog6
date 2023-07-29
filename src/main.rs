@@ -221,15 +221,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 // debug
 
-                // analyze::Character_ID::Coordinates(known_character_coordinates[9].0.clone())
-                //     .identify_char(
-                //         known_character_coordinates[9].2.clone(),
-                //         known_character_coordinates[9].0.clone(),
-                //         curves,
-                //         known_character_coordinates[9].3.clone(),
-                //     )
-                //     .unwrap();
-
                 // (vector of coordinates, index, angle, section)
 
                 let test = Analyze {
