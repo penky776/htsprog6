@@ -254,18 +254,17 @@ impl Analyze {
 
         match params.section {
             Section::A => {
-                let coords = highest_x_coords[0]; // grab random coordinate
+                let coords = highest_y_coords[0]; // grab random coordinate
 
-                let (x, y) = (coords.0, coords.1);
+                let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                 let mut one_or_e = false;
 
-                // highest_x_coords
                 for i in params.coordinates_vec.iter() {
-                    let (cc_x, cc_y) = (i.0, i.1);
+                    let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
 
                     // if even one coordinate exists that's an "ascending" slope (positive gradient)
-                    if cc_y > y && cc_x < x {
+                    if cc_y >= y - cc_h && cc_y <= y && cc_x <= x + w && cc_x >= x {
                         one_or_e = true;
                     }
                 }
@@ -287,7 +286,16 @@ impl Analyze {
                 }
             }
 
-            Section::B => {}
+            Section::B => {
+                // highest x
+                let coords = lowest_x_coords[0];
+
+                let (x, y) = (coords.0, coords.1);
+
+                let mut one_or_e = false;
+
+                for i in params.coordinates_vec.iter() {}
+            }
 
             Section::C => {}
 
