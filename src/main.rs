@@ -482,7 +482,7 @@ fn analyze_character(
         //     "already iterated through len: {:?}",
         //     already_iterated_through_len
         // );
-        // println!("new len of known: {:?}", new_len_of_known); // debug
+        // println!("new len of known: {:?}", new_len_of_known);
         // println!("already iterated through {:?}", already_iterated_through);
         // println!(
         //     "known_character_coordinates: {:?}",
