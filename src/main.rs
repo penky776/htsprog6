@@ -224,9 +224,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // (vector of coordinates, index, angle, section)
 
                 let test = Analyze {
-                    coordinates_vec: known_character_coordinates[2].0.clone(),
-                    coordinates_angle: known_character_coordinates[2].2,
-                    section: known_character_coordinates[2].3,
+                    coordinates_vec: known_character_coordinates[11].0.clone(),
+                    coordinates_angle: known_character_coordinates[11].2,
+                    section: known_character_coordinates[11].3,
                 };
 
                 // test.identify_char(curves);
