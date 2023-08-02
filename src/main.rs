@@ -21,7 +21,7 @@ impl fmt::Display for HTSError {
     }
 }
 
-const COOKIES: &str = "HackThisSite=9r1a4shs81vb36eq7k6vus8qg6";
+const COOKIES: &str = "HackThisSite=f95v2gfgpthili0de67s74p922";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -224,9 +224,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // (vector of coordinates, index, angle, section)
 
                 let test = Analyze {
-                    coordinates_vec: known_character_coordinates[198].0.clone(),
-                    coordinates_angle: known_character_coordinates[198].2,
-                    section: known_character_coordinates[198].3,
+                    coordinates_vec: known_character_coordinates[11].0.clone(),
+                    coordinates_angle: known_character_coordinates[11].2,
+                    section: known_character_coordinates[11].3,
                 };
 
                 // test.identify_char(curves);

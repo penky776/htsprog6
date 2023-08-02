@@ -288,7 +288,6 @@ impl Analyze {
                 }
             }
 
-            // TODO
             Section::B => {
                 let coords = highest_x_coords[0];
                 let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
@@ -322,13 +321,72 @@ impl Analyze {
                 }
             }
 
-            // TODO
-            Section::C => {}
+            Section::C => {
+                let coords = lowest_y_coords[0];
+                let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
-            Section::D => {}
+                let mut one_or_e = false;
+
+                for i in params.coordinates_vec.iter() {
+                    let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
+
+                    // positive gradient
+                    if cc_y > y - cc_h && cc_y < y + h && cc_x < x + w && cc_x > x - cc_w {
+                        one_or_e = true;
+                    }
+                }
+
+                if one_or_e {
+                    let coords = highest_y_coords[0];
+                    let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
+
+                    for i in params.coordinates_vec.iter() {
+                        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
+
+                        // positive gradient
+                        if cc_y > y - cc_h && cc_y < y + h && cc_x < x + w && cc_x > x - cc_w {
+                            return e;
+                        }
+                    }
+                    return one;
+                } else {
+                    return f;
+                }
+            }
+
+            Section::D => {
+                let coords = lowest_x_coords[0];
+                let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
+
+                let mut one_or_e = false;
+
+                for i in params.coordinates_vec.iter() {
+                    let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
+
+                    // negative gradient
+                    if cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h {
+                        one_or_e = true;
+                    }
+                }
+
+                if one_or_e {
+                    let coords = highest_x_coords[0];
+                    let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
+
+                    for i in params.coordinates_vec.iter() {
+                        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
+
+                        // negative gradient
+                        if cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h {
+                            return e;
+                        }
+                    }
+                    return one;
+                } else {
+                    return f;
+                }
+            }
         }
-
-        return e;
     }
 
     fn is_seven_a_or_four(params: CharParams) -> Character {
