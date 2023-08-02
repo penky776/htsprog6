@@ -67,7 +67,7 @@ impl Analyze {
         // section: Section,
     ) -> Result<Character, HTSError> {
         // characters that can have both curves and lines: B, D, 5, 2, 9, 0, C, 8, 6, 3
-        let methods: [fn(CharParams) -> Result<Character, HTSError>; 4] = [
+        let methods: [fn(CharParams) -> (Character, bool); 4] = [
             Self::is_two_three_or_five,
             Self::is_six_eight_or_nine,
             Self::is_b_d_or_c,
@@ -76,7 +76,7 @@ impl Analyze {
 
         // the order of this array is deliberate
         // characters with no curves: E, F, A, 1, 7, 4
-        let methods_if_no_arcs: [fn(CharParams) -> Result<Character, HTSError>; 2] =
+        let methods_if_no_arcs: [fn(CharParams) -> (Character, bool); 2] =
             [Self::is_seven_a_or_four, Self::is_e_f_or_one];
 
         // check if any arcs
@@ -101,18 +101,16 @@ impl Analyze {
             for method in methods {
                 let character = (method)(method_params.clone());
 
-                match character {
-                    Ok(char) => return Ok(char),
-                    Err(e) => eprintln!("{:?}", e),
+                if character.1 {
+                    return Ok(character.0);
                 }
             }
         } else {
             for method in methods_if_no_arcs {
                 let character = (method)(method_params.clone());
 
-                match character {
-                    Ok(char) => return Ok(char),
-                    Err(e) => eprintln!("{:?}", e),
+                if character.1 {
+                    return Ok(character.0);
                 }
             }
         }
@@ -193,7 +191,7 @@ impl Analyze {
 
     // ---------------------------------------methods if no arcs----------------------------------------------------------------
 
-    fn is_e_f_or_one(params: CharParams) -> Result<Character, HTSError> {
+    fn is_e_f_or_one(params: CharParams) -> (Character, bool) {
         let one = Character {
             id: CharacterID::One,
             val: String::from("1"),
@@ -220,12 +218,12 @@ impl Analyze {
                 if cc_w > 1 && cc_h == 1 {
                     // is one or e
                     if params.coordinates_vec.len() == 4 {
-                        return Ok(e);
+                        return (e, true);
                     } else {
-                        return Ok(one);
+                        return (one, true);
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
         } else if params.angle == 90 {
@@ -235,12 +233,12 @@ impl Analyze {
 
                 if cc_h > 1 && cc_w == 1 {
                     if params.coordinates_vec.len() == 4 {
-                        return Ok(e);
+                        return (e, true);
                     } else {
-                        return Ok(one);
+                        return (one, true);
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
         } else if params.angle == 180 {
@@ -250,12 +248,12 @@ impl Analyze {
 
                 if cc_w > 1 && cc_h == 1 {
                     if params.coordinates_vec.len() == 4 {
-                        return Ok(e);
+                        return (e, true);
                     } else {
-                        return Ok(one);
+                        return (one, true);
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
         } else if params.angle == 270 {
@@ -265,12 +263,12 @@ impl Analyze {
 
                 if cc_h > 1 && cc_w == 1 {
                     if params.coordinates_vec.len() == 4 {
-                        return Ok(e);
+                        return (e, true);
                     } else {
-                        return Ok(one);
+                        return (one, true);
                     }
                 } else if params.coordinates_vec.len() == 3 {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
         }
@@ -294,12 +292,12 @@ impl Analyze {
                     for i in params.coordinates_vec.iter() {
                         // descending slope (negative gradient)
                         if Analyze::negative_gradient(i, coords) {
-                            return Ok(one);
+                            return (one, true);
                         }
                     }
-                    return Ok(e);
+                    return (e, true);
                 } else {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
 
@@ -319,12 +317,12 @@ impl Analyze {
 
                     for i in params.coordinates_vec.iter() {
                         if Analyze::positive_gradient(i, coords) {
-                            return Ok(one);
+                            return (one, true);
                         }
                     }
-                    return Ok(e);
+                    return (e, true);
                 } else {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
 
@@ -344,12 +342,12 @@ impl Analyze {
 
                     for i in params.coordinates_vec.iter() {
                         if Analyze::negative_gradient(i, coords) {
-                            return Ok(one);
+                            return (one, true);
                         }
                     }
-                    return Ok(e);
+                    return (e, true);
                 } else {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
 
@@ -369,19 +367,19 @@ impl Analyze {
 
                     for i in params.coordinates_vec.iter() {
                         if Analyze::positive_gradient(i, coords) {
-                            return Ok(one);
+                            return (one, true);
                         }
                     }
-                    return Ok(e);
+                    return (e, true);
                 } else {
-                    return Ok(f);
+                    return (f, true);
                 }
             }
         }
     }
 
-    // when writing this function, remember to consider all possibilities including 1, E, and F
-    fn is_seven_a_or_four(params: CharParams) -> Result<Character, HTSError> {
+    // consider all possibilities including 1, E, and F
+    fn is_seven_a_or_four(params: CharParams) -> (Character, bool) {
         let seven = Character {
             id: CharacterID::Seven,
             val: String::from("7"),
@@ -403,7 +401,12 @@ impl Analyze {
         // define 0, 90, 180, 270
 
         match params.section {
-            Section::A => {}
+            Section::A => {
+                // bottom
+                let coords = highest_y_coords[0];
+
+                for i in params.coordinates_vec.iter() {}
+            }
 
             Section::B => {}
 
@@ -412,40 +415,40 @@ impl Analyze {
             Section::D => {}
         }
 
-        return Ok(a);
+        return (a, true);
     }
 
     // --------------------------------------methods if arcs--------------------------------------------------------------------
 
-    fn is_zero(params: CharParams) -> Result<Character, HTSError> {
+    fn is_zero(params: CharParams) -> (Character, bool) {
         let character = Character {
             id: CharacterID::Zero,
             val: String::from("0"),
         };
-        return Ok(character);
+        return (character, true);
     }
 
-    fn is_two_three_or_five(params: CharParams) -> Result<Character, HTSError> {
+    fn is_two_three_or_five(params: CharParams) -> (Character, bool) {
         let character = Character {
             id: CharacterID::Zero,
             val: String::from("0"),
         };
-        return Ok(character);
+        return (character, true);
     }
 
-    fn is_b_d_or_c(params: CharParams) -> Result<Character, HTSError> {
+    fn is_b_d_or_c(params: CharParams) -> (Character, bool) {
         let character = Character {
             id: CharacterID::Zero,
             val: String::from("0"),
         };
-        return Ok(character);
+        return (character, true);
     }
 
-    fn is_six_eight_or_nine(params: CharParams) -> Result<Character, HTSError> {
+    fn is_six_eight_or_nine(params: CharParams) -> (Character, bool) {
         let character = Character {
             id: CharacterID::Zero,
             val: String::from("0"),
         };
-        return Ok(character);
+        return (character, true);
     }
 }
