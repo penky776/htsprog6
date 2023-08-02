@@ -94,7 +94,7 @@ impl Analyze {
         // the order of this array is deliberate
         // characters with no curves: E, F, A, 1, 7, 4
         let methods_if_no_arcs: [fn(CharParams) -> Character; 2] =
-            [Self::is_seven_a_or_four, Self::is_e_f_or_one];
+            [Self::is_e_f_or_one, Self::is_seven_a_or_four];
 
         // check if any arcs
         let arcs_present = self.coordinates_vec.iter().any(|i| {
@@ -133,6 +133,20 @@ impl Analyze {
             val: String::from("A"),
         };
         return Ok(test_character);
+    }
+
+    fn positive_gradient(i: &(i32, i32, i32, i32), coords: &(i32, i32, i32, i32)) -> bool {
+        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
+        let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
+
+        cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h
+    }
+
+    fn negative_gradient(i: &(i32, i32, i32, i32), coords: &(i32, i32, i32, i32)) -> bool {
+        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
+        let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
+
+        cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h
     }
 
     // ----------------------------------methods if no arcs---------------------------------------
@@ -256,33 +270,25 @@ impl Analyze {
             Section::A => {
                 let coords = highest_y_coords[0]; // grab random coordinate
 
-                let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
-
                 let mut one_or_e = false;
 
                 for i in params.coordinates_vec.iter() {
-                    let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                    // debug
                     // if even one coordinate exists that's an "ascending" slope (positive gradient)
-                    if cc_y > y - cc_h && cc_y < y + h && cc_x < x + w && cc_x > x - cc_w {
+                    if Analyze::positive_gradient(i, coords) {
                         one_or_e = true;
                     }
                 }
 
                 if one_or_e {
                     let coords = lowest_y_coords[0];
-                    let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                     for i in params.coordinates_vec.iter() {
-                        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                        // positive gradient
-                        if cc_y > y - cc_h && cc_y < y + h && cc_x < x + w && cc_x > x - cc_w {
-                            return e;
+                        // descending slope (negative gradient)
+                        if Analyze::negative_gradient(i, coords) {
+                            return one;
                         }
                     }
-                    return one;
+                    return e;
                 } else {
                     return f;
                 }
@@ -290,32 +296,24 @@ impl Analyze {
 
             Section::B => {
                 let coords = highest_x_coords[0];
-                let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                 let mut one_or_e = false;
 
                 for i in params.coordinates_vec.iter() {
-                    let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                    // negative gradient
-                    if cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h {
+                    if Analyze::negative_gradient(i, coords) {
                         one_or_e = true;
                     }
                 }
 
                 if one_or_e {
                     let coords = lowest_x_coords[0];
-                    let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                     for i in params.coordinates_vec.iter() {
-                        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                        // negative gradient
-                        if cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h {
-                            return e;
+                        if Analyze::positive_gradient(i, coords) {
+                            return one;
                         }
                     }
-                    return one;
+                    return e;
                 } else {
                     return f;
                 }
@@ -323,32 +321,24 @@ impl Analyze {
 
             Section::C => {
                 let coords = lowest_y_coords[0];
-                let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                 let mut one_or_e = false;
 
                 for i in params.coordinates_vec.iter() {
-                    let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                    // positive gradient
-                    if cc_y > y - cc_h && cc_y < y + h && cc_x < x + w && cc_x > x - cc_w {
+                    if Analyze::positive_gradient(i, coords) {
                         one_or_e = true;
                     }
                 }
 
                 if one_or_e {
                     let coords = highest_y_coords[0];
-                    let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                     for i in params.coordinates_vec.iter() {
-                        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                        // positive gradient
-                        if cc_y > y - cc_h && cc_y < y + h && cc_x < x + w && cc_x > x - cc_w {
-                            return e;
+                        if Analyze::negative_gradient(i, coords) {
+                            return one;
                         }
                     }
-                    return one;
+                    return e;
                 } else {
                     return f;
                 }
@@ -356,32 +346,24 @@ impl Analyze {
 
             Section::D => {
                 let coords = lowest_x_coords[0];
-                let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                 let mut one_or_e = false;
 
                 for i in params.coordinates_vec.iter() {
-                    let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                    // negative gradient
-                    if cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h {
+                    if Analyze::negative_gradient(i, coords) {
                         one_or_e = true;
                     }
                 }
 
                 if one_or_e {
                     let coords = highest_x_coords[0];
-                    let (x, y, w, h) = (coords.0, coords.1, coords.2, coords.3);
 
                     for i in params.coordinates_vec.iter() {
-                        let (cc_x, cc_y, cc_w, cc_h) = (i.0, i.1, i.2, i.3);
-
-                        // negative gradient
-                        if cc_x < x + w && cc_x > x - cc_w && cc_y < y + h && cc_y > y - cc_h {
-                            return e;
+                        if Analyze::positive_gradient(i, coords) {
+                            return one;
                         }
                     }
-                    return one;
+                    return e;
                 } else {
                     return f;
                 }
