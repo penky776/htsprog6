@@ -76,8 +76,7 @@ impl Analyze {
 
         // the order of this array is deliberate
         // characters with no curves: E, F, A, 1, 7, 4
-        let methods_if_no_arcs: [fn(CharParams) -> (Character, bool); 2] =
-            [Self::is_seven_a_or_four, Self::is_e_f_or_one];
+        let methods_if_no_arcs: [fn(CharParams) -> (Character, bool); 1] = [Self::no_arcs];
 
         // check if any arcs
         let arcs_present = self.coordinates_vec.iter().any(|i| {
@@ -189,9 +188,29 @@ impl Analyze {
         );
     }
 
+    fn get_top_and_bottom_coords(params: CharParams) {
+        // TODO
+    }
+
     // ---------------------------------------methods if no arcs----------------------------------------------------------------
 
-    fn is_e_f_or_one(params: CharParams) -> (Character, bool) {
+    // consider all possibilities: A, 7, 4 1, E, and F
+    fn no_arcs(params: CharParams) -> (Character, bool) {
+        let seven = Character {
+            id: CharacterID::Seven,
+            val: String::from("7"),
+        };
+
+        let a = Character {
+            id: CharacterID::A,
+            val: String::from("A"),
+        };
+
+        let four = Character {
+            id: CharacterID::Four,
+            val: String::from("4"),
+        };
+
         let one = Character {
             id: CharacterID::One,
             val: String::from("1"),
@@ -210,202 +229,45 @@ impl Analyze {
         let (highest_x_coords, lowest_x_coords, highest_y_coords, lowest_y_coords) =
             Self::general_initialization_variables(params.clone());
 
-        if params.angle == 0 {
-            // check if flat at bottom
-            for i in highest_y_coords.iter() {
-                let (cc_w, cc_h) = (i.2, i.3);
-
-                if cc_w > 1 && cc_h == 1 {
-                    // is one or e
-                    if params.coordinates_vec.len() == 4 {
-                        return (e, true);
-                    } else {
-                        return (one, true);
-                    }
-                } else if params.coordinates_vec.len() == 3 {
-                    return (f, true);
-                }
-            }
-        } else if params.angle == 90 {
-            // check if right-most coord is bottom
-            for i in highest_x_coords.iter() {
-                let (cc_w, cc_h) = (i.2, i.3);
-
-                if cc_h > 1 && cc_w == 1 {
-                    if params.coordinates_vec.len() == 4 {
-                        return (e, true);
-                    } else {
-                        return (one, true);
-                    }
-                } else if params.coordinates_vec.len() == 3 {
-                    return (f, true);
-                }
-            }
-        } else if params.angle == 180 {
-            // check if flat at top
-            for i in lowest_y_coords.iter() {
-                let (cc_w, cc_h) = (i.2, i.3);
-
-                if cc_w > 1 && cc_h == 1 {
-                    if params.coordinates_vec.len() == 4 {
-                        return (e, true);
-                    } else {
-                        return (one, true);
-                    }
-                } else if params.coordinates_vec.len() == 3 {
-                    return (f, true);
-                }
-            }
-        } else if params.angle == 270 {
-            // check if leftmost coordinates are vertical lines
-            for i in lowest_x_coords.iter() {
-                let (cc_w, cc_h) = (i.2, i.3);
-
-                if cc_h > 1 && cc_w == 1 {
-                    if params.coordinates_vec.len() == 4 {
-                        return (e, true);
-                    } else {
-                        return (one, true);
-                    }
-                } else if params.coordinates_vec.len() == 3 {
-                    return (f, true);
-                }
-            }
-        }
-
-        match params.section {
-            Section::A => {
-                let coords = highest_y_coords[0]; // grab random coordinate
-
-                let mut one_or_e = false;
-
-                for i in params.coordinates_vec.iter() {
-                    // if even one coordinate exists that's an "ascending" slope (positive gradient)
-                    if Analyze::positive_gradient(i, coords) {
-                        one_or_e = true;
-                    }
-                }
-
-                if one_or_e {
-                    let coords = lowest_y_coords[0];
-
-                    for i in params.coordinates_vec.iter() {
-                        // descending slope (negative gradient)
-                        if Analyze::negative_gradient(i, coords) {
-                            return (one, true);
-                        }
-                    }
-                    return (e, true);
-                } else {
-                    return (f, true);
-                }
-            }
-
-            Section::B => {
-                let coords = highest_x_coords[0];
-
-                let mut one_or_e = false;
-
-                for i in params.coordinates_vec.iter() {
-                    if Analyze::negative_gradient(i, coords) {
-                        one_or_e = true;
-                    }
-                }
-
-                if one_or_e {
-                    let coords = lowest_x_coords[0];
-
-                    for i in params.coordinates_vec.iter() {
-                        if Analyze::positive_gradient(i, coords) {
-                            return (one, true);
-                        }
-                    }
-                    return (e, true);
-                } else {
-                    return (f, true);
-                }
-            }
-
-            Section::C => {
-                let coords = lowest_y_coords[0];
-
-                let mut one_or_e = false;
-
-                for i in params.coordinates_vec.iter() {
-                    if Analyze::positive_gradient(i, coords) {
-                        one_or_e = true;
-                    }
-                }
-
-                if one_or_e {
-                    let coords = highest_y_coords[0];
-
-                    for i in params.coordinates_vec.iter() {
-                        if Analyze::negative_gradient(i, coords) {
-                            return (one, true);
-                        }
-                    }
-                    return (e, true);
-                } else {
-                    return (f, true);
-                }
-            }
-
-            Section::D => {
-                let coords = lowest_x_coords[0];
-
-                let mut one_or_e = false;
-
-                for i in params.coordinates_vec.iter() {
-                    if Analyze::negative_gradient(i, coords) {
-                        one_or_e = true;
-                    }
-                }
-
-                if one_or_e {
-                    let coords = highest_x_coords[0];
-
-                    for i in params.coordinates_vec.iter() {
-                        if Analyze::positive_gradient(i, coords) {
-                            return (one, true);
-                        }
-                    }
-                    return (e, true);
-                } else {
-                    return (f, true);
-                }
-            }
-        }
-    }
-
-    // consider all possibilities including 1, E, and F
-    fn is_seven_a_or_four(params: CharParams) -> (Character, bool) {
-        let seven = Character {
-            id: CharacterID::Seven,
-            val: String::from("7"),
-        };
-
-        let a = Character {
-            id: CharacterID::A,
-            val: String::from("A"),
-        };
-
-        let four = Character {
-            id: CharacterID::Four,
-            val: String::from("4"),
-        };
-
-        let (highest_x_coords, lowest_x_coords, highest_y_coords, lowest_y_coords) =
-            Self::general_initialization_variables(params.clone());
-
         // define 0, 90, 180, 270
 
         match params.section {
             Section::A => {
-                // bottom
-                let coords = highest_y_coords[0];
+                // "bottom"
+                let coords = highest_y_coords[0]; // grab random coordinate
 
-                for i in params.coordinates_vec.iter() {}
+                let mut one_seven_or_e = false;
+
+                for i in params.coordinates_vec.iter() {
+                    // if even one coordinate exists that's an "ascending" slope (positive gradient)
+                    if Self::positive_gradient(i, coords) {
+                        one_seven_or_e = true;
+                    }
+                }
+
+                if one_seven_or_e {
+                    // "top"
+                    let coords = lowest_y_coords[0];
+
+                    // TODO
+                } else {
+                    // "top"
+                    let coords = lowest_y_coords[0];
+
+                    let mut a_f_or_four = false;
+
+                    for i in params.coordinates_vec.iter() {
+                        if Self::positive_gradient(i, coords) {
+                            a_f_or_four = true;
+                        }
+                    }
+
+                    if a_f_or_four {
+                        // TODO
+                    } else {
+                        return (four, true);
+                    }
+                }
             }
 
             Section::B => {}
@@ -417,6 +279,194 @@ impl Analyze {
 
         return (a, true);
     }
+
+    // Sample function
+    // fn is_e_f_or_one(params: CharParams) -> (Character, bool) {
+    //     let one = Character {
+    //         id: CharacterID::One,
+    //         val: String::from("1"),
+    //     };
+
+    //     let f = Character {
+    //         id: CharacterID::F,
+    //         val: String::from("F"),
+    //     };
+
+    //     let e = Character {
+    //         id: CharacterID::E,
+    //         val: String::from("E"),
+    //     };
+
+    //     let (highest_x_coords, lowest_x_coords, highest_y_coords, lowest_y_coords) =
+    //         Self::general_initialization_variables(params.clone());
+
+    //     if params.angle == 0 {
+    //         // check if flat at bottom
+    //         for i in highest_y_coords.iter() {
+    //             let (cc_w, cc_h) = (i.2, i.3);
+
+    //             if cc_w > 1 && cc_h == 1 {
+    //                 // is one or e
+    //                 if params.coordinates_vec.len() == 4 {
+    //                     return (e, true);
+    //                 } else {
+    //                     return (one, true);
+    //                 }
+    //             } else if params.coordinates_vec.len() == 3 {
+    //                 return (f, true);
+    //             }
+    //         }
+    //     } else if params.angle == 90 {
+    //         // check if right-most coord is bottom
+    //         for i in highest_x_coords.iter() {
+    //             let (cc_w, cc_h) = (i.2, i.3);
+
+    //             if cc_h > 1 && cc_w == 1 {
+    //                 if params.coordinates_vec.len() == 4 {
+    //                     return (e, true);
+    //                 } else {
+    //                     return (one, true);
+    //                 }
+    //             } else if params.coordinates_vec.len() == 3 {
+    //                 return (f, true);
+    //             }
+    //         }
+    //     } else if params.angle == 180 {
+    //         // check if flat at top
+    //         for i in lowest_y_coords.iter() {
+    //             let (cc_w, cc_h) = (i.2, i.3);
+
+    //             if cc_w > 1 && cc_h == 1 {
+    //                 if params.coordinates_vec.len() == 4 {
+    //                     return (e, true);
+    //                 } else {
+    //                     return (one, true);
+    //                 }
+    //             } else if params.coordinates_vec.len() == 3 {
+    //                 return (f, true);
+    //             }
+    //         }
+    //     } else if params.angle == 270 {
+    //         // check if leftmost coordinates are vertical lines
+    //         for i in lowest_x_coords.iter() {
+    //             let (cc_w, cc_h) = (i.2, i.3);
+
+    //             if cc_h > 1 && cc_w == 1 {
+    //                 if params.coordinates_vec.len() == 4 {
+    //                     return (e, true);
+    //                 } else {
+    //                     return (one, true);
+    //                 }
+    //             } else if params.coordinates_vec.len() == 3 {
+    //                 return (f, true);
+    //             }
+    //         }
+    //     }
+
+    //     match params.section {
+    //         Section::A => {
+    //             let coords = highest_y_coords[0]; // grab random coordinate
+
+    //             let mut one_or_e = false;
+
+    //             for i in params.coordinates_vec.iter() {
+    //                 // if even one coordinate exists that's an "ascending" slope (positive gradient)
+    //                 if Analyze::positive_gradient(i, coords) {
+    //                     one_or_e = true;
+    //                 }
+    //             }
+
+    //             if one_or_e {
+    //                 let coords = lowest_y_coords[0];
+
+    //                 for i in params.coordinates_vec.iter() {
+    //                     // descending slope (negative gradient)
+    //                     if Analyze::negative_gradient(i, coords) {
+    //                         return (one, true);
+    //                     }
+    //                 }
+    //                 return (e, true);
+    //             } else {
+    //                 return (f, true);
+    //             }
+    //         }
+
+    //         Section::B => {
+    //             let coords = highest_x_coords[0];
+
+    //             let mut one_or_e = false;
+
+    //             for i in params.coordinates_vec.iter() {
+    //                 if Analyze::negative_gradient(i, coords) {
+    //                     one_or_e = true;
+    //                 }
+    //             }
+
+    //             if one_or_e {
+    //                 let coords = lowest_x_coords[0];
+
+    //                 for i in params.coordinates_vec.iter() {
+    //                     if Analyze::positive_gradient(i, coords) {
+    //                         return (one, true);
+    //                     }
+    //                 }
+    //                 return (e, true);
+    //             } else {
+    //                 return (f, true);
+    //             }
+    //         }
+
+    //         Section::C => {
+    //             let coords = lowest_y_coords[0];
+
+    //             let mut one_or_e = false;
+
+    //             for i in params.coordinates_vec.iter() {
+    //                 if Analyze::positive_gradient(i, coords) {
+    //                     one_or_e = true;
+    //                 }
+    //             }
+
+    //             if one_or_e {
+    //                 let coords = highest_y_coords[0];
+
+    //                 for i in params.coordinates_vec.iter() {
+    //                     if Analyze::negative_gradient(i, coords) {
+    //                         return (one, true);
+    //                     }
+    //                 }
+    //                 return (e, true);
+    //             } else {
+    //                 return (f, true);
+    //             }
+    //         }
+
+    //         Section::D => {
+    //             let coords = lowest_x_coords[0];
+
+    //             let mut one_or_e = false;
+
+    //             for i in params.coordinates_vec.iter() {
+    //                 if Analyze::negative_gradient(i, coords) {
+    //                     one_or_e = true;
+    //                 }
+    //             }
+
+    //             if one_or_e {
+    //                 let coords = highest_x_coords[0];
+
+    //                 for i in params.coordinates_vec.iter() {
+    //                     if Analyze::positive_gradient(i, coords) {
+    //                         return (one, true);
+    //                     }
+    //                 }
+    //                 return (e, true);
+    //             } else {
+    //                 return (f, true);
+    //             }
+    //         }
+    //     }
+    // }
 
     // --------------------------------------methods if arcs--------------------------------------------------------------------
 
