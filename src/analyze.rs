@@ -190,6 +190,8 @@ impl Analyze {
 
     fn get_top_and_bottom_coords(params: CharParams) {
         // TODO
+        // depending on section
+        // Sec A = bottom closest to the centre, top away
     }
 
     // ---------------------------------------methods if no arcs----------------------------------------------------------------
@@ -233,38 +235,81 @@ impl Analyze {
 
         match params.section {
             Section::A => {
-                // "bottom"
-                let coords = highest_y_coords[0]; // grab random coordinate
+                /*
+                    bottom - highest_y_coords
+                    -------------------------
+                    1 = always positive gradient
+                    A = always negative gradient
+                    7 = always negative gradient
+                    4 = always negative gradient (there's actually a range of angles for which this applies to)
+                    E = both negative and positive gradient
+                    F = always negative gradient
 
-                let mut one_seven_or_e = false;
+                    top - lowest_y_coords
+                    ---------------------
+                    1 = both positive and negative gradient
+                    A = positive gradient at a few angles; at the rest of the angles, there are two lines of negative gradient
+                    7 = both positive and negative gradient
+                    4 = negative gradient
+                    E = positive gradient
+                    F = positive gradient
+                */
+
+                // TODO: write function to get more accurate set of top and bottom coords
+                let bottom_coords = highest_y_coords[0];
+                let top_coords = lowest_y_coords[0];
+
+                let mut one_or_e = false;
 
                 for i in params.coordinates_vec.iter() {
-                    // if even one coordinate exists that's an "ascending" slope (positive gradient)
-                    if Self::positive_gradient(i, coords) {
-                        one_seven_or_e = true;
+                    if Self::positive_gradient(i, bottom_coords) {
+                        one_or_e = true;
                     }
                 }
 
-                if one_seven_or_e {
-                    // "top"
-                    let coords = lowest_y_coords[0];
-
-                    // TODO
-                } else {
-                    // "top"
-                    let coords = lowest_y_coords[0];
-
-                    let mut a_f_or_four = false;
-
+                if one_or_e {
                     for i in params.coordinates_vec.iter() {
-                        if Self::positive_gradient(i, coords) {
-                            a_f_or_four = true;
+                        if Self::negative_gradient(i, top_coords) {
+                            return (one, true);
                         }
                     }
 
-                    if a_f_or_four {
-                        // TODO
+                    return (e, true);
+                } else {
+                    let mut seven_or_f = false;
+
+                    for i in params.coordinates_vec.iter() {
+                        if Self::positive_gradient(i, top_coords) {
+                            seven_or_f = true;
+                        }
+                    }
+
+                    if seven_or_f {
+                        for i in params.coordinates_vec.iter() {
+                            if Self::negative_gradient(i, top_coords) {
+                                return (seven, true);
+                            }
+                        }
+
+                        return (f, true);
                     } else {
+                        for i in params.coordinates_vec.iter() {
+                            if Self::positive_gradient(i, top_coords) {
+                                return (a, true);
+                            }
+                        }
+
+                        let mut number_of_pos_grad_lines_detected = 0;
+                        for i in params.coordinates_vec.iter() {
+                            if Self::negative_gradient(i, top_coords) {
+                                number_of_pos_grad_lines_detected += 1;
+                            }
+                        }
+
+                        if number_of_pos_grad_lines_detected == 2 {
+                            return (a, true);
+                        }
+
                         return (four, true);
                     }
                 }
