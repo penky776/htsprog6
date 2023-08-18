@@ -293,21 +293,23 @@ impl Analyze {
 
                         return (f, true);
                     } else {
-                        for i in params.coordinates_vec.iter() {
-                            if Self::positive_gradient(i, top_coords) {
+                        if params.angle < 70 && params.angle > 30 {
+                            let mut number_of_pos_grad_lines_detected = 0;
+                            for i in params.coordinates_vec.iter() {
+                                if Self::negative_gradient(i, top_coords) {
+                                    number_of_pos_grad_lines_detected += 1;
+                                }
+                            }
+
+                            if number_of_pos_grad_lines_detected == 2 {
                                 return (a, true);
                             }
-                        }
-
-                        let mut number_of_pos_grad_lines_detected = 0;
-                        for i in params.coordinates_vec.iter() {
-                            if Self::negative_gradient(i, top_coords) {
-                                number_of_pos_grad_lines_detected += 1;
+                        } else {
+                            for i in params.coordinates_vec.iter() {
+                                if Self::positive_gradient(i, top_coords) {
+                                    return (a, true);
+                                }
                             }
-                        }
-
-                        if number_of_pos_grad_lines_detected == 2 {
-                            return (a, true);
                         }
 
                         return (four, true);
